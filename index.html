@@ -2,23 +2,30 @@
 <html>
 
 <head>
-    <title>Formulário de Serviço</title>
+    <title>Formulário de Ocorrências - Whatsapp</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f7f7f7;
         }
+body {
+    background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: bottom center;
+}
+       .container {
+    display: flex;
+    justify-content: space-between;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.5); /* Altere o último valor (0.5) para ajustar a opacidade */
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-        .container {
-            display: flex;
-            justify-content: space-between;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #fff;
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
 
         .container form {
             flex: 1;
@@ -57,11 +64,14 @@
             border-color: #42426F;
         }
 
-        textarea {
+        textarea[name="ocorrencia"] {
             resize: vertical;
             min-height: 80px;
         }
 
+textarea[name="origemDestino"] {
+    height: 20px;
+}
         button {
             display: block;
             margin-top: 10px;
@@ -92,6 +102,8 @@
 
         .report-container h2 {
             color: #42426F;
+text-align: center;
+    margin-bottom: 20px;
             margin-bottom: 10px;
         }
 
@@ -106,6 +118,23 @@
         .report-entry strong {
             font-weight: bold;
         }
+
+        .report-entry .editButton {
+            margin-right: 10px;
+        }
+
+        .report-entry .deleteButton {
+            margin-right: 10px;
+            background-color: #f44336;
+        }
+
+        .report-entry .copyButton {
+            background-color: #42426F;
+        }
+
+        .report-entry .copyButton.copied {
+            background-color: #9ec6b8;
+        }
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -113,164 +142,212 @@
             var storedData = localStorage.getItem("formData");
             if (storedData) {
                 var formDataArray = JSON.parse(storedData);
-                updateReport(formDataArray);
-            }
+updateReport(formDataArray);
+}
+        var form = document.getElementById("serviceForm");
 
-            var form = document.getElementById("serviceForm");
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
 
-            form.addEventListener("submit", function (event) {
-                event.preventDefault();
-
-                var formData = extractFormData(form);
-                saveFormData(formData);
-                clearForm(form);
-            });
-
-            var resetButton = document.getElementById("resetButton");
-            resetButton.addEventListener("click", function (event) {
-                event.preventDefault();
-                clearForm(form);
-            });
-
-            var clearCacheButton = document.getElementById("clearCacheButton");
-            clearCacheButton.addEventListener("click", function (event) {
-                event.preventDefault();
-                clearCache();
-            });
-                       function extractFormData(form) {
-                var formData = {};
-                var inputs = form.querySelectorAll(
-                    "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-                );
-
-                inputs.forEach(function (input) {
-                    formData[input.name] = input.value;
-                });
-
-                return formData;
-            }
-
-            function saveFormData(formData) {
-                var storedData = localStorage.getItem("formData");
-                var formDataArray = storedData ? JSON.parse(storedData) : [];
-
-                formDataArray.push(formData);
-                localStorage.setItem("formData", JSON.stringify(formDataArray));
-
-                updateReport(formDataArray);
-            }
-
-            function clearForm(form) {
-                var inputs = form.querySelectorAll(
-                    "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-                );
-
-                inputs.forEach(function (input) {
-                    input.value = "";
-                });
-            }
-
-            function clearCache() {
-                localStorage.removeItem("formData");
-                var reportDiv = document.getElementById("report");
-                reportDiv.innerHTML = "";
-            }
-
-            function formatBrazilianDate(date) {
-                var parts = date.split("-");
-                return parts[2] + "/" + parts[1] + "/" + parts[0];
-            }
-
-            function updateReport(formDataArray) {
-                var reportDiv = document.getElementById("report");
-                reportDiv.innerHTML = "";
-
-                formDataArray.forEach(function (formData) {
-                    var reportEntry = document.createElement("div");
-                    reportEntry.classList.add("report-entry");
-
-                    var reportText = document.createElement("p");
-                    reportText.innerHTML = `
-                        <strong>Data do Serviço:</strong> ${formatBrazilianDate(formData["dataServico"])}<br>
-                        <strong>Nº do Serviço:</strong> ${formData["numServico"]}<br>
-                        <strong>Veículo:</strong> <strong>*${formData["veiculo"]}*</strong><br>
-                        <strong>Origem/Destino:</strong> ${formData["origemDestino"]}<br>
-                        <strong>Horário de Partida:</strong> ${formData["horarioPartida"]}<br>
-                        <strong>Horário de Chegada:</strong> ${formData["horarioChegada"]}<br>
-                        <strong>Motorista:</strong> ${formData["motorista"]}<br>
-                        <strong>Ocorrência:</strong> ${formData["ocorrencia"]}<br><br>
-                    `;
-
-                    var copyButton = document.createElement("button");
-copyButton.innerText = "Copiar";
-copyButton.addEventListener("click", function () {
-    copyToClipboard(reportText.innerText);
-    copyButton.disabled = false; // Desabilita o botão
-    copyButton.style.backgroundColor = "#ccc"; // Altera a cor de fundo para um tom mais claro
-    copyButton.innerText = "Copiado!"; // Altera o texto do botão para "Copiado!"
-});
-
-                    reportEntry.appendChild(reportText);
-                    reportEntry.appendChild(copyButton);
-                    reportDiv.appendChild(reportEntry);
-                });
-            }
-
-            function copyToClipboard(text) {
-                var tempTextArea = document.createElement("textarea");
-                tempTextArea.value = text;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempTextArea);
-                alert("Texto copiado para a área de transferência!");
-            }
+            var formData = extractFormData(form);
+            saveFormData(formData);
+            clearForm(form);
         });
-    </script>
+
+        var resetButton = document.getElementById("resetButton");
+        resetButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            clearForm(form);
+        });
+
+        var clearCacheButton = document.getElementById("clearCacheButton");
+        clearCacheButton.addEventListener("click", function (event) {
+            event.preventDefault();
+            clearCache();
+        });
+
+        function extractFormData(form) {
+            var formData = {};
+            var inputs = form.querySelectorAll(
+                "input[type='text'], input[type='number'], input[type='date'], input[type='time'],"
+            );
+
+            inputs.forEach(function (input) {
+                formData[input.name] = input.value;
+            });
+
+            return formData;
+        }
+
+        function saveFormData(formData) {
+            var storedData = localStorage.getItem("formData");
+            var formDataArray = storedData ? JSON.parse(storedData) : [];
+
+            formDataArray.push(formData);
+            localStorage.setItem("formData", JSON.stringify(formDataArray));
+
+            updateReport(formDataArray);
+        }
+
+        function clearForm(form) {
+            var inputs = form.querySelectorAll(
+                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
+            );
+
+            inputs.forEach(function (input) {
+                input.value = "";
+            });
+        }
+
+        function clearCache() {
+            localStorage.removeItem("formData");
+            var reportDiv = document.getElementById("report");
+            reportDiv.innerHTML = "";
+        }
+
+        function formatBrazilianDate(date) {
+            var parts = date.split("-");
+            return parts[2] + "/" + parts[1] + "/" + parts[0];
+        }
+
+        function updateReport(formDataArray) {
+            var reportDiv = document.getElementById("report");
+            reportDiv.innerHTML = "";
+
+            formDataArray.forEach(function (formData, index) {
+                var reportEntry = document.createElement("div");
+                reportEntry.classList.add("report-entry");
+
+                var reportText = document.createElement("p");
+                reportText.innerHTML = `
+                    <strong>Data do Serviço:</strong> ${formatBrazilianDate(formData["dataServico"])}<br>
+                    <strong>Nº do Serviço:</strong> ${formData["numServico"]}<br>
+                    <strong>Veículo:</strong> <strong>*${formData["veiculo"]}*</strong><br>
+                    <strong>Origem/Destino:</strong> ${formData["origemDestino"]}<br>
+                    <strong>Horário de Partida:</strong> ${formData["horarioPartida"]}<br>
+                    <strong>Horário de Chegada:</strong> ${formData["horarioChegada"]}<br>
+                    <strong>Motorista:</strong> ${formData["motorista"]}<br>
+                    <strong>Ocorrência:</strong> ${formData["ocorrencia"]}<br><br>
+                `;
+
+                var editButton = document.createElement("button");
+                editButton.innerText = "Editar";
+                editButton.classList.add("editButton");
+                editButton.addEventListener("click", function () {
+                    editFormData(index);
+                });
+
+                var deleteButton = document.createElement("button");
+                deleteButton.innerText = "Excluir";
+                deleteButton.classList.add("deleteButton");
+                deleteButton.addEventListener("click", function () {
+                    deleteFormData(index);
+                });
+
+                var copyButton = document.createElement("button");
+                copyButton.innerText = "Copiar";
+                copyButton.classList.add("copyButton");
+                copyButton.addEventListener("click", function () {
+                copyToClipboard(reportText);
+});
+                reportEntry.appendChild(reportText);
+                reportEntry.appendChild(editButton);
+                reportEntry.appendChild(deleteButton);
+                reportEntry.appendChild(copyButton);
+
+                reportDiv.appendChild(reportEntry);
+            });
+        }
+
+        function editFormData(index) {
+            var storedData = localStorage.getItem("formData");
+            var formDataArray = storedData ? JSON.parse(storedData) : [];
+
+            var formData = formDataArray[index];
+            var inputs = form.querySelectorAll(
+                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
+            );
+
+            inputs.forEach(function (input) {
+                input.value = formData[input.name] || "";
+            });
+
+            // Remover o item editado do array
+            formDataArray.splice(index, 1);
+            localStorage.setItem("formData", JSON.stringify(formDataArray));
+
+            updateReport(formDataArray);
+        }
+
+        function deleteFormData(index) {
+            var storedData = localStorage.getItem("formData");
+            var formDataArray = storedData ? JSON.parse(storedData) : [];
+
+            formDataArray.splice(index, 1);
+            localStorage.setItem("formData", JSON.stringify(formDataArray));
+
+            updateReport(formDataArray);
+        }
+
+        function copyToClipboard(element) {
+            var range = document.createRange();
+            range.selectNode(element);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+
+            try {
+                var successful = document.execCommand("copy");
+                var copyButton = element.parentNode.querySelector(".copyButton");
+                copyButton.classList.add("copied");
+                copyButton.innerText = "Copiado!";
+                setTimeout(function () {
+                    copyButton.classList.remove("copied");
+                    copyButton.innerText = "Copiar";
+                }, 2000);
+            } catch (err) {
+                console.log("Falha ao copiar para a área de transferência: ", err);
+            }
+
+            window.getSelection().removeAllRanges();
+        }
+    });
+</script>
 </head>
-
 <body>
-    <h1>Formulário de Ocorrências</h1>
     <div class="container">
-        <div>
-            <form id="serviceForm">
-                <label>Data do Serviço:</label>
-                <input type="date" name="dataServico" required>
+        <form id="serviceForm">
+            <label for="dataServico">Data do Serviço:</label>
+            <input type="date" name="dataServico" required>
+        <label for="numServico">Nº do Serviço:</label>
+        <input type="text" name="numServico" required>
 
-                <label>Nº do Serviço:</label>
-                <input type="text" name="numServico" required>
+        <label for="veiculo">Veículo:</label>
+        <input type="text" name="veiculo" required>
 
-                <label>Veículo:</label>
-                <input type="text" name="veiculo" required>
+        <label for="origemDestino">Origem/Destino:</label>
+        <textarea name="origemDestino" required></textarea>
 
-                <label>Origem/Destino                </label>
-                <input type="text" name="origemDestino" required>
+        <label for="horarioPartida">Horário de Partida:</label>
+        <input type="time" name="horarioPartida" required>
 
-                <label>Horário de Partida:</label>
-                <input type="time" name="horarioPartida" required>
+        <label for="horarioChegada">Horário de Chegada:</label>
+        <input type="time" name="horarioChegada" required>
 
-                <label>Horário de Chegada:</label>
-                <input type="time" name="horarioChegada" required>
+        <label for="motorista">Motorista:</label>
+        <input type="text" name="motorista" required>
 
-                <label>Motorista:</label>
-                <input type="text" name="motorista" required>
+        <label for="ocorrencia">Ocorrência:</label>
+        <textarea name="ocorrencia" required></textarea>
 
-                <label>Ocorrência:</label>
-<textarea name="ocorrencia" rows="6" cols="50"></textarea>
+        <button type="submit">Salvar</button>
+        <button id="resetButton" type="reset">Limpar</button>
+        <button id="clearCacheButton">Limpar Cache</button>
+    </form>
 
-                <button type="submit">Enviar</button>
-                <button type="reset" id="resetButton">Limpar Formulário</button>
-            </form>
-        </div>
-
-        <div class="report-container">
-            <h2>Relatório de Ocorrências</h2>
-            <div id="report"></div>
-            <button id="clearCacheButton">Limpar Cache</button>
-        </div>
+    <div class="report-container">
+        <h2>Relatório de Ocorrências</h2>
+        <div id="report"></div>
     </div>
+</div>
 </body>
-
 </html>
-
-
