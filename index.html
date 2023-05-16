@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Formulário de Ocorrências - Whatsapp</title>
     <style>
@@ -8,24 +7,26 @@
             font-family: Arial, sans-serif;
             background-color: #f7f7f7;
         }
-body {
-    background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    background-position: bottom center;
-}
-       .container {
-    display: flex;
-    justify-content: space-between;
-    max-width: 800px;
-    margin: 0 auto;
-    background-color: rgba(255, 255, 255, 0.5); /* Altere o último valor (0.5) para ajustar a opacidade */
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
 
+        body {
+            background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%);
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: bottom center;
+        }
+
+        .container {
+            display: flex;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.5);
+            /* Altere o último valor (0.5) para ajustar a opacidade */
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
 
         .container form {
             flex: 1;
@@ -69,9 +70,10 @@ body {
             min-height: 80px;
         }
 
-textarea[name="origemDestino"] {
-    height: 20px;
-}
+        textarea[name="origemDestino"] {
+            height: 20px;
+        }
+
         button {
             display: block;
             margin-top: 10px;
@@ -102,9 +104,8 @@ textarea[name="origemDestino"] {
 
         .report-container h2 {
             color: #42426F;
-text-align: center;
-    margin-bottom: 20px;
-            margin-bottom: 10px;
+            text-align: center;
+            margin-bottom: 20px;
         }
 
         .report-entry {
@@ -126,25 +127,24 @@ text-align: center;
         .report-entry .deleteButton {
             margin-right: 10px;
             background-color: #f44336;
-        }
-
-        .report-entry .copyButton {
-            background-color: #42426F;
-        }
-
-        .report-entry .copyButton.copied {
-            background-color: #9ec6b8;
-        }
-    </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Recuperar dados do cache, se disponíveis
-            var storedData = localStorage.getItem("formData");
-            if (storedData) {
-                var formDataArray = JSON.parse(storedData);
-updateReport(formDataArray);
 }
+    .report-entry .copyButton {
+        background-color: #42426F;
+    }
+
+    .report-entry .copyButton.copied {
+        background-color: #9ec6b8;
+    }
+</style>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
         var form = document.getElementById("serviceForm");
+        var reportDiv = document.getElementById("report");
+
+        // Recuperar dados do cache, se disponíveis
+        var storedData = localStorage.getItem("formData");
+        var formDataArray = storedData ? JSON.parse(storedData) : [];
+        updateReport(formDataArray);
 
         form.addEventListener("submit", function (event) {
             event.preventDefault();
@@ -169,7 +169,7 @@ updateReport(formDataArray);
         function extractFormData(form) {
             var formData = {};
             var inputs = form.querySelectorAll(
-                "input[type='text'], input[type='number'], input[type='date'], input[type='time'],"
+                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
             );
 
             inputs.forEach(function (input) {
@@ -201,7 +201,6 @@ updateReport(formDataArray);
 
         function clearCache() {
             localStorage.removeItem("formData");
-            var reportDiv = document.getElementById("report");
             reportDiv.innerHTML = "";
         }
 
@@ -211,7 +210,6 @@ updateReport(formDataArray);
         }
 
         function updateReport(formDataArray) {
-            var reportDiv = document.getElementById("report");
             reportDiv.innerHTML = "";
 
             formDataArray.forEach(function (formData, index) {
@@ -238,18 +236,18 @@ updateReport(formDataArray);
                 });
 
                 var deleteButton = document.createElement("button");
-                deleteButton.innerText = "Excluir";
-                deleteButton.classList.add("deleteButton");
-                deleteButton.addEventListener("click", function () {
-                    deleteFormData(index);
-                });
-
+deleteButton.innerText = "Excluir";
+deleteButton.classList.add("deleteButton");
+deleteButton.addEventListener("click", function () {
+deleteFormData(index);
+});
                 var copyButton = document.createElement("button");
                 copyButton.innerText = "Copiar";
                 copyButton.classList.add("copyButton");
                 copyButton.addEventListener("click", function () {
-                copyToClipboard(reportText);
-});
+                    copyToClipboard(reportText);
+                });
+
                 reportEntry.appendChild(reportText);
                 reportEntry.appendChild(editButton);
                 reportEntry.appendChild(deleteButton);
@@ -318,36 +316,30 @@ updateReport(formDataArray);
         <form id="serviceForm">
             <label for="dataServico">Data do Serviço:</label>
             <input type="date" name="dataServico" required>
-        <label for="numServico">Nº do Serviço:</label>
-        <input type="text" name="numServico" required>
-
-        <label for="veiculo">Veículo:</label>
-        <input type="text" name="veiculo" required>
-
-        <label for="origemDestino">Origem/Destino:</label>
-        <textarea name="origemDestino" required></textarea>
-
-        <label for="horarioPartida">Horário de Partida:</label>
-        <input type="time" name="horarioPartida" required>
-
-        <label for="horarioChegada">Horário de Chegada:</label>
-        <input type="time" name="horarioChegada" required>
-
-        <label for="motorista">Motorista:</label>
-        <input type="text" name="motorista" required>
-
-        <label for="ocorrencia">Ocorrência:</label>
-        <textarea name="ocorrencia" required></textarea>
-
-        <button type="submit">Salvar</button>
-        <button id="resetButton" type="reset">Limpar</button>
-        <button id="clearCacheButton">Limpar Cache</button>
-    </form>
-
-    <div class="report-container">
-        <h2>Relatório de Ocorrências</h2>
-        <div id="report"></div>
-    </div>
+            <label for="numServico">Nº do Serviço:</label>
+            <input type="text" name="numServico" required>
+            <label for="veiculo">Veículo:</label>
+            <input type="text" name="veiculo" required>
+            <label for="origemDestino">Origem/Destino:</label>
+            <textarea name="origemDestino" required></textarea>
+            <label for="horarioPartida">Horário de Partida:</label>
+            <input type="time" name="horarioPartida" required>
+            <label for="horarioChegada">Horário de Chegada:</label>
+            <input type="time" name="horarioChegada" required>
+            <label for="motorista">Motorista:</label>
+            <input type="text" name="motorista" required>
+            <label for="ocorrencia">Ocorrência:</label>
+            <textarea name="ocorrencia" required></textarea>
+            <button type="submit">Salvar</button>
+            <button id="resetButton" type="
+reset">Limpar</button>
+</form>
+<div class="report-container">
+<h2>Ocorrências</h2>
+<div id="report"></div>
+<button id="clearCacheButton">Limpar Ocorrências</button>
 </div>
+</div>
+
 </body>
 </html>
