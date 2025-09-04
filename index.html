@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Formulário de Ocorrências - WhatsApp</title>
+  <title>Formulário de Socorros v2.0</title>
   <style>
     :root{
       --primary:#42426F;
@@ -14,20 +14,16 @@
       --text:#222;
       --muted:#666;
     }
-
-    /* Unificado: sem duplicar body */
     body{
       font-family: Arial, sans-serif;
       color: var(--text);
       margin: 0;
       background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%) fixed bottom center / cover no-repeat;
     }
-
     .container{
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-      max-width: 960px;
+      display:flex;
+      gap:24px;
+      max-width: 1000px;
       margin: 24px auto;
       background-color: rgba(255,255,255,0.55);
       border-radius: 12px;
@@ -35,16 +31,10 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.12);
       backdrop-filter: blur(3px);
     }
+    form{ flex:1; min-width: 300px; }
+    .report-container{ flex:1; min-width: 300px; }
 
-    form{
-      flex: 1;
-      min-width: 280px;
-    }
-
-    .report-container{
-      flex: 1;
-      min-width: 280px;
-    }
+    h2{ color: var(--primary); margin: 0 0 12px; }
 
     label{
       display:block;
@@ -52,12 +42,7 @@
       color: var(--primary);
       font-weight: 600;
     }
-
-    input[type="text"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    textarea{
+    input[type="text"], input[type="number"], input[type="date"], input[type="time"], textarea, select{
       width: 100%;
       padding: 10px 12px;
       border: 1px solid #ccc;
@@ -67,141 +52,149 @@
       font-size: 14px;
       box-sizing: border-box;
     }
-
-    input:focus,
-    textarea:focus{
-      outline: none;
-      border-color: var(--primary);
-      background-color: #fff;
+    input:focus, textarea:focus, select:focus{
+      outline: none; border-color: var(--primary); background-color: #fff;
     }
+    textarea{ min-height: 80px; resize: vertical; }
 
-    textarea[name="ocorrencia"]{ min-height: 90px; resize: vertical; }
-    textarea[name="origemDestino"]{ min-height: 60px; resize: vertical; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row-3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
-    .row{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .radio-group{ display:flex; gap: 12px; align-items:center; }
+    .radio-item{ display:flex; gap:6px; align-items:center; }
 
+    .actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top: 10px; }
     .btn{
-      display:inline-block;
-      margin-top: 10px;
-      padding: 10px 16px;
-      background-color: var(--primary);
-      color:#fff;
-      border:none;
-      border-radius: 8px;
-      cursor:pointer;
-      transition: transform .04s ease, filter .2s ease;
+      display:inline-block; padding:10px 16px; border:none; border-radius:8px;
+      color:#fff; background:var(--primary); cursor:pointer;
+      transition: transform .04s ease, filter .2s ease, background-color .2s ease;
     }
     .btn:active{ transform: translateY(1px); }
-
-    .btn-primary{ background-color: var(--primary); }
-    .btn-primary:hover{ background-color: var(--primary-hover); }
-
-    .btn-danger{ background-color: var(--danger); }
-    .btn-danger:hover{ filter: brightness(0.95); }
-
-    .btn-warning{ background-color: var(--warning); }
-    .btn-warning:hover{ filter: brightness(0.95); }
-
-    .btn-copy{ background-color: var(--primary); }
-    .btn-copy:hover{ filter: brightness(0.95); }
-    .btn-copy.copied{ background-color: var(--copy-done); color:#083b2e; }
-
-    .actions{
-      display:flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .report-container h2{
-      color: var(--primary);
-      text-align:center;
-      margin: 0 0 12px;
-    }
-
-    .empty-state{
-      text-align:center;
-      color: var(--muted);
-      padding: 16px;
-      border:1px dashed #bbb;
-      border-radius: 8px;
-      background:#fafafa;
-    }
+    .btn-primary{ background:var(--primary); }
+    .btn-primary:hover{ background:var(--primary-hover); }
+    .btn-warning{ background:var(--warning); }
+    .btn-warning:hover{ filter:brightness(.95); }
+    .btn-danger{ background:var(--danger); }
+    .btn-danger:hover{ filter:brightness(.95); }
+    .btn-copy{ background:var(--primary); }
+    .btn-copy:hover{ filter:brightness(.95); }
+    .btn-copy.copied{ background: var(--copy-done); color:#083b2e; }
 
     .report-entry{
-      background:#fff;
-      border:1px solid #e6e6e6;
-      border-radius: 10px;
-      padding: 12px 12px 10px;
-      margin-bottom: 12px;
+      background:#fff; border:1px solid #e6e6e6; border-radius:10px;
+      padding:12px 12px 10px; margin-bottom:12px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     }
-
-    .report-entry p{
-      margin: 6px 0;
-      font-size:14px;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
+    .report-entry p{ margin:6px 0; font-size:14px; line-height:1.35; word-break: break-word; }
     .report-entry strong{ font-weight:700; }
 
-    .toolbar{
-      display:flex;
-      gap:8px;
-      margin-top:10px;
-      justify-content: flex-end;
+    .empty-state{
+      text-align:center; color: var(--muted); padding:16px;
+      border:1px dashed #bbb; border-radius:8px; background:#fafafa;
     }
+    .toolbar{ display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
 
-    @media (max-width: 860px){
-      .container{ flex-direction: column; }
-      .row{ grid-template-columns: 1fr; }
+    @media (max-width: 900px){
+      .container{ flex-direction:column; }
+      .row, .row-3{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <form id="serviceForm" autocomplete="off" novalidate>
-      <h2 style="margin:0 0 8px; color:var(--primary);">Cadastro de Ocorrências</h2>
+    <form id="socorroForm" autocomplete="off" novalidate>
+      <h2>Cadastro de Socorro</h2>
 
-      <label for="dataServico">Data do Serviço:</label>
-      <input id="dataServico" type="date" name="dataServico" required>
-
-      <label for="numServico">Nº do Serviço:</label>
-      <input id="numServico" type="text" name="numServico" required>
-
-      <label for="veiculo">Veículo:</label>
-      <input id="veiculo" type="text" name="veiculo" list="veiculosList" placeholder="Ex.: Ônibus 1234" required>
-      <datalist id="veiculosList">
-        <!-- Exemplos (remova/edite conforme seu contexto) -->
-        <option value="Ônibus 1234"></option>
-        <option value="Van 22"></option>
-        <option value="Carro Apoio A-07"></option>
-      </datalist>
-
-      <label for="origemDestino">Origem/Destino:</label>
-      <textarea id="origemDestino" name="origemDestino" placeholder="Ex.: Terminal Central → Bairro X" required></textarea>
+      <label for="dataSocorro">Data do Socorro:</label>
+      <input id="dataSocorro" type="date" name="dataSocorro" required>
 
       <div class="row">
         <div>
-          <label for="horarioPartida">Horário de Partida:</label>
-          <input id="horarioPartida" type="time" name="horarioPartida" required>
+          <label for="carro">Carro <small>(Ex.: 11216.U)</small>:</label>
+          <input id="carro" type="text" name="carro" list="carrosList" placeholder="11216.U" required>
+          <datalist id="carrosList">
+            <option value="11216.U"></option>
+            <option value="11202.U"></option>
+            <option value="11001.U"></option>
+          </datalist>
         </div>
         <div>
-          <label for="horarioChegada">Horário de Chegada:</label>
-          <input id="horarioChegada" type="time" name="horarioChegada" required>
+          <label for="carroSegue">Carro que segue <small>(Ex.: 11202.U)</small>:</label>
+          <input id="carroSegue" type="text" name="carroSegue" list="carrosList" placeholder="11202.U">
         </div>
       </div>
 
-      <label for="motorista">Motorista:</label>
-      <input id="motorista" type="text" name="motorista" required>
+      <div class="row">
+        <div>
+          <label for="motorista">Motorista:</label>
+          <input id="motorista" type="text" name="motorista" required>
+        </div>
+        <div>
+          <label for="matricula">Mat:</label>
+          <input id="matricula" type="text" name="matricula" placeholder="Matrícula">
+        </div>
+      </div>
 
-      <label for="ocorrencia">Ocorrência:</label>
-      <textarea id="ocorrencia" name="ocorrencia" placeholder="Descreva a ocorrência..." required></textarea>
+      <div class="row">
+        <div>
+          <label for="dataViagem">Data da viagem:</label>
+          <input id="dataViagem" type="date" name="dataViagem">
+        </div>
+        <div>
+          <label for="horarioViagem">Horário da viagem:</label>
+          <input id="horarioViagem" type="time" name="horarioViagem">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="qtdClientes">Qtd. clientes:</label>
+          <input id="qtdClientes" type="number" name="qtdClientes" min="0" step="1" placeholder="0">
+        </div>
+        <div>
+          <label>Encomendas:</label>
+          <div class="radio-group" role="radiogroup" aria-label="Encomendas">
+            <label class="radio-item">
+              <input type="radio" name="encomendas" value="Sim"> <span>Sim</span>
+            </label>
+            <label class="radio-item">
+              <input type="radio" name="encomendas" value="Não" checked> <span>Não</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <label for="linha">Linha <small>(Ex.: RIOxCGB)</small>:</label>
+      <input id="linha" type="text" name="linha" placeholder="RIOxCGB">
+
+      <div class="row">
+        <div>
+          <label for="inicioSocorro">Início do Socorro:</label>
+          <input id="inicioSocorro" type="time" name="inicioSocorro">
+        </div>
+        <div>
+          <label for="fimSocorro">Fim do socorro:</label>
+          <input id="fimSocorro" type="time" name="fimSocorro">
+        </div>
+      </div>
+
+      <label for="localSocorro">Local do Socorro:</label>
+      <input id="localSocorro" type="text" name="localSocorro" placeholder="Ex.: Av. Brasil, KM 120">
+
+      <label for="defeitoMotorista">Defeito passado pelo motorista:</label>
+      <textarea id="defeitoMotorista" name="defeitoMotorista" placeholder="Descreva o relato do motorista..."></textarea>
+
+      <label for="responsavelManutencao">Responsável da Manutenção acionado:</label>
+      <input id="responsavelManutencao" type="text" name="responsavelManutencao" placeholder="Nome do responsável">
+
+      <label for="saidaSocorro">Local e horário da saída do socorro <small>(Ex.: RIO - 08:52)</small>:</label>
+      <input id="saidaSocorro" type="text" name="saidaSocorro" placeholder="RIO - 08:52">
+
+      <label for="obs">Obs :</label>
+      <textarea id="obs" name="obs" placeholder="Observações adicionais..."></textarea>
+
+      <label for="coordenador">Coordenador:</label>
+      <input id="coordenador" type="text" name="coordenador">
 
       <div class="actions">
         <button type="submit" class="btn btn-primary">Salvar</button>
@@ -210,67 +203,69 @@
     </form>
 
     <div class="report-container">
-      <h2>Ocorrências</h2>
+      <h2>Registros</h2>
       <div id="report"></div>
 
       <div class="toolbar">
         <button id="exportCSV" class="btn btn-primary" title="Exportar todas em CSV">Exportar CSV</button>
         <button id="exportJSON" class="btn btn-primary" title="Exportar todas em JSON">Exportar JSON</button>
-        <button id="clearCacheButton" class="btn btn-danger" title="Apagar todas as ocorrências">Limpar Ocorrências</button>
+        <button id="clearAll" class="btn btn-danger" title="Apagar todos os registros">Limpar Registros</button>
       </div>
     </div>
   </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("serviceForm");
+      const form = document.getElementById("socorroForm");
       const reportDiv = document.getElementById("report");
-      const resetButton = document.getElementById("resetButton");
-      const clearCacheButton = document.getElementById("clearCacheButton");
       const exportCSVBtn = document.getElementById("exportCSV");
       const exportJSONBtn = document.getElementById("exportJSON");
+      const clearAllBtn = document.getElementById("clearAll");
 
-      // --- Utilidades de armazenamento (robustas) ---
+      // ---- Storage robusto ----
       function loadData(){
         try{
-          const raw = localStorage.getItem("formData");
+          const raw = localStorage.getItem("socorrosV2");
           const arr = raw ? JSON.parse(raw) : [];
           return Array.isArray(arr) ? arr : [];
-        }catch{
-          return [];
-        }
+        }catch{ return []; }
       }
       function saveData(arr){
-        localStorage.setItem("formData", JSON.stringify(arr));
+        localStorage.setItem("socorrosV2", JSON.stringify(arr));
       }
 
-      // --- Datas e ordenação ---
-      function formatBrazilianDate(dateStr){
+      // ---- Util ----
+      function uid(){ return `${Date.now()}_${Math.random().toString(36).slice(2,8)}`; }
+
+      function formatBRDate(dateStr){
         if(!dateStr) return "";
         const [y,m,d] = dateStr.split("-");
-        return `${d}/${m}/${y}`;
+        return `${d}/${m}/${y.slice(2)}`; // dd/mm/aa
       }
-      function makeTimestamp(d, t){ // combina data+hora para ordenar
-        if(!d && !t) return 0;
-        const iso = d ? `${d}T${t || "00:00"}:00` : `1970-01-01T00:00:00`;
+      function makeTs(dateStr, timeStr){
+        if(!dateStr && !timeStr) return 0;
+        const iso = `${dateStr || "1970-01-01"}T${timeStr || "00:00"}:00`;
         const ms = Date.parse(iso);
         return Number.isNaN(ms) ? 0 : ms;
       }
 
-      // --- Extração e limpeza do formulário ---
+      function getField(el){ return (el?.value ?? "").trim(); }
+
       function extractFormData(formEl){
         const data = {};
-        const inputs = formEl.querySelectorAll(
-          "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-        );
-        inputs.forEach(input => { data[input.name] = input.value.trim(); });
+        const fields = formEl.querySelectorAll("input, textarea, select");
+        fields.forEach(f => {
+          if(f.type === "radio"){
+            if(f.checked){ data[f.name] = f.value; }
+          } else {
+            data[f.name] = getField(f);
+          }
+        });
         return data;
       }
-      function clearForm(formEl){
-        formEl.reset(); // já limpa de forma consistente
-      }
 
-      // --- Construção segura do relatório (sem innerHTML de dados do usuário) ---
+      function clearForm(formEl){ formEl.reset(); }
+
       function line(label, value){
         const p = document.createElement("p");
         const strong = document.createElement("strong");
@@ -282,22 +277,32 @@
         return p;
       }
 
-      async function copyEntryAsText(formData, btn){
+      async function copyEntryAsText(item, btn){
         const lines = [
-          `Data do Serviço: ${formatBrazilianDate(formData.dataServico)}`,
-          `Nº do Serviço: ${formData.numServico}`,
-          `Veículo: *${formData.veiculo}*`,
-          `Origem/Destino: ${formData.origemDestino}`,
-          `Horário de Partida: ${formData.horarioPartida}`,
-          `Horário de Chegada: ${formData.horarioChegada}`,
-          `Motorista: ${formData.motorista}`,
-          `Ocorrência: ${formData.ocorrencia}`,
+          `Data do Socorro: ${formatBRDate(item.dataSocorro)}`,
+          `Carro: ${item.carro}`,
+          `Motorista: ${item.motorista}`,
+          `Mat: ${item.matricula}`,
+          `Data da viagem: ${formatBRDate(item.dataViagem)}`,
+          `Horário da viagem: ${item.horarioViagem}`,
+          `Qtd. clientes: ${item.qtdClientes}`,
+          `Encomendas: ${item.encomendas || ""}`,
+          `Linha: ${item.linha}`,
+          `Início do Socorro: ${item.inicioSocorro}`,
+          `Local do Socorro: ${item.localSocorro}`,
+          `Defeito passado pelo motorista: ${item.defeitoMotorista}`,
+          `Responsável da Manutenção acionado: ${item.responsavelManutencao}`,
+          `Local e horário da saída do socorro: ${item.saidaSocorro}`,
+          `Fim do socorro: ${item.fimSocorro}`,
+          `Carro que segue: ${item.carroSegue}`,
+          `Obs: ${item.obs}`,
+          `Coordenador: ${item.coordenador}`,
           ``
         ];
         await navigator.clipboard.writeText(lines.join("\n"));
         if(btn){
-          btn.classList.add("copied");
           const old = btn.textContent;
+          btn.classList.add("copied");
           btn.textContent = "Copiado!";
           setTimeout(()=>{ btn.classList.remove("copied"); btn.textContent = old; }, 1800);
         }
@@ -305,34 +310,43 @@
 
       function updateReport(arr){
         reportDiv.innerHTML = "";
-
         if(!arr.length){
           const empty = document.createElement("div");
           empty.className = "empty-state";
-          empty.textContent = "Nenhuma ocorrência registrada ainda.";
+          empty.textContent = "Nenhum registro ainda.";
           reportDiv.appendChild(empty);
           return;
         }
 
-        // ordenar por data+hora (mais recentes primeiro)
+        // Ordenar por Data do Socorro + Início do Socorro (mais recentes primeiro)
         const sorted = [...arr].sort((a,b) => {
-          const ta = makeTimestamp(a.dataServico, a.horarioPartida || a.horarioChegada);
-          const tb = makeTimestamp(b.dataServico, b.horarioPartida || b.horarioChegada);
+          const ta = makeTs(a.dataSocorro, a.inicioSocorro || a.horarioViagem || a.fimSocorro);
+          const tb = makeTs(b.dataSocorro, b.inicioSocorro || b.horarioViagem || b.fimSocorro);
           return tb - ta;
         });
 
-        sorted.forEach((formData) => {
+        sorted.forEach(item => {
           const entry = document.createElement("div");
           entry.className = "report-entry";
 
-          entry.appendChild(line("Data do Serviço:", formatBrazilianDate(formData.dataServico)));
-          entry.appendChild(line("Nº do Serviço:", formData.numServico));
-          entry.appendChild(line("Veículo:", `*${formData.veiculo}*`));
-          entry.appendChild(line("Origem/Destino:", formData.origemDestino));
-          entry.appendChild(line("Horário de Partida:", formData.horarioPartida));
-          entry.appendChild(line("Horário de Chegada:", formData.horarioChegada));
-          entry.appendChild(line("Motorista:", formData.motorista));
-          entry.appendChild(line("Ocorrência:", formData.ocorrencia));
+          entry.appendChild(line("Data do Socorro:", formatBRDate(item.dataSocorro)));
+          entry.appendChild(line("Carro:", item.carro));
+          entry.appendChild(line("Motorista:", item.motorista));
+          entry.appendChild(line("Mat:", item.matricula));
+          entry.appendChild(line("Data da viagem:", formatBRDate(item.dataViagem)));
+          entry.appendChild(line("Horário da viagem:", item.horarioViagem));
+          entry.appendChild(line("Qtd. clientes:", item.qtdClientes));
+          entry.appendChild(line("Encomendas:", item.encomendas));
+          entry.appendChild(line("Linha:", item.linha));
+          entry.appendChild(line("Início do Socorro:", item.inicioSocorro));
+          entry.appendChild(line("Local do Socorro:", item.localSocorro));
+          entry.appendChild(line("Defeito passado pelo motorista:", item.defeitoMotorista));
+          entry.appendChild(line("Responsável da Manutenção acionado:", item.responsavelManutencao));
+          entry.appendChild(line("Local e horário da saída do socorro:", item.saidaSocorro));
+          entry.appendChild(line("Fim do socorro:", item.fimSocorro));
+          entry.appendChild(line("Carro que segue:", item.carroSegue));
+          entry.appendChild(line("Obs:", item.obs));
+          entry.appendChild(line("Coordenador:", item.coordenador));
 
           const actions = document.createElement("div");
           actions.className = "actions";
@@ -341,143 +355,135 @@
           editBtn.type = "button";
           editBtn.className = "btn btn-warning";
           editBtn.textContent = "Editar";
-          editBtn.addEventListener("click", () => editFormData(formData));
+          editBtn.addEventListener("click", () => editItem(item.id));
 
-          const deleteBtn = document.createElement("button");
-          deleteBtn.type = "button";
-          deleteBtn.className = "btn btn-danger";
-          deleteBtn.textContent = "Excluir";
-          deleteBtn.addEventListener("click", () => deleteFormData(formData));
+          const delBtn = document.createElement("button");
+          delBtn.type = "button";
+          delBtn.className = "btn btn-danger";
+          delBtn.textContent = "Excluir";
+          delBtn.addEventListener("click", () => deleteItem(item.id));
 
           const copyBtn = document.createElement("button");
           copyBtn.type = "button";
           copyBtn.className = "btn btn-copy";
           copyBtn.textContent = "Copiar";
-          copyBtn.addEventListener("click", async () => {
-            try{ await copyEntryAsText(formData, copyBtn); } catch(e){ console.error(e); }
-          });
+          copyBtn.addEventListener("click", () => copyEntryAsText(item, copyBtn));
 
           actions.appendChild(editBtn);
-          actions.appendChild(deleteBtn);
+          actions.appendChild(delBtn);
           actions.appendChild(copyBtn);
-
           entry.appendChild(actions);
+
           reportDiv.appendChild(entry);
         });
       }
 
-      function saveFormData(newItem){
+      function saveItem(data){
         const arr = loadData();
-        arr.push(newItem);
+        arr.push({ id: uid(), ...data });
         saveData(arr);
         updateReport(arr);
       }
 
-      function editFormData(item){
+      function editItem(id){
+        const arr = loadData();
+        const item = arr.find(x => x.id === id);
+        if(!item) return;
+
         // Preenche o formulário
-        const inputs = form.querySelectorAll(
-          "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-        );
-        inputs.forEach(input => { input.value = item[input.name] || ""; });
+        Object.keys(item).forEach(k => {
+          if(k === "id") return;
+          const el = form.elements[k];
+          if(!el) return;
+          if(el.type === "radio"){
+            // grupo encomendas
+            const radios = form.querySelectorAll(`input[name="${k}"]`);
+            radios.forEach(r => r.checked = (r.value === item[k]));
+          }else{
+            el.value = item[k] || "";
+          }
+        });
 
-        // Remove a ocorrência que está sendo editada
-        const arr = loadData().filter(x => !isSameItem(x, item));
+        // Remove o item editado da base para regravar ao salvar
+        const next = arr.filter(x => x.id !== id);
+        saveData(next);
+        updateReport(next);
+      }
+
+      function deleteItem(id){
+        if(!confirm("Excluir este registro?")) return;
+        const arr = loadData().filter(x => x.id !== id);
         saveData(arr);
         updateReport(arr);
       }
 
-      function deleteFormData(item){
-        if(!confirm("Excluir esta ocorrência?")) return;
-        const arr = loadData().filter(x => !isSameItem(x, item));
-        saveData(arr);
-        updateReport(arr);
-      }
-
-      function clearCache(){
-        if(!confirm("Tem certeza que deseja remover todas as ocorrências?")) return;
-        localStorage.removeItem("formData");
+      function clearAll(){
+        if(!confirm("Tem certeza que deseja remover todos os registros?")) return;
+        localStorage.removeItem("socorrosV2");
         updateReport([]);
       }
 
-      // Heurística simples para identificar o "mesmo item"
-      function isSameItem(a,b){
-        return a.dataServico === b.dataServico &&
-               a.numServico === b.numServico &&
-               a.veiculo === b.veiculo &&
-               a.origemDestino === b.origemDestino &&
-               a.horarioPartida === b.horarioPartida &&
-               a.horarioChegada === b.horarioChegada &&
-               a.motorista === b.motorista &&
-               a.ocorrencia === b.ocorrencia;
-      }
+      // ---- Exportações ----
+      const CSV_HEADERS = [
+        "dataSocorro","carro","motorista","matricula","dataViagem","horarioViagem",
+        "qtdClientes","encomendas","linha","inicioSocorro","localSocorro",
+        "defeitoMotorista","responsavelManutencao","saidaSocorro","fimSocorro",
+        "carroSegue","obs","coordenador","id"
+      ];
 
-      // --- Exportações ---
       function exportJSON(){
         const arr = loadData();
         const blob = new Blob([JSON.stringify(arr, null, 2)], {type:"application/json"});
         const url = URL.createObjectURL(blob);
-        download(url, `ocorrencias_${new Date().toISOString().slice(0,10)}.json`);
+        download(url, `socorros_${new Date().toISOString().slice(0,10)}.json`);
       }
 
       function exportCSV(){
         const arr = loadData();
         if(!arr.length){ alert("Não há dados para exportar."); return; }
-        const headers = [
-          "dataServico","numServico","veiculo","origemDestino",
-          "horarioPartida","horarioChegada","motorista","ocorrencia"
-        ];
+
         const escapeCSV = (val="") => {
           const v = String(val).replace(/"/g,'""');
           return /[",\n;]/.test(v) ? `"${v}"` : v;
         };
-        const lines = [
-          headers.join(";"),
-          ...arr.map(o => headers.map(h => escapeCSV(o[h] ?? "")).join(";"))
-        ];
+
+        const lines = [];
+        lines.push(CSV_HEADERS.join(";"));
+        for(const o of arr){
+          const row = CSV_HEADERS.map(h => {
+            if(h === "dataSocorro" || h === "dataViagem"){
+              return escapeCSV(formatBRDate(o[h] ?? ""));
+            }
+            return escapeCSV(o[h] ?? "");
+          }).join(";");
+          lines.push(row);
+        }
+
         const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
         const url = URL.createObjectURL(blob);
-        download(url, `ocorrencias_${new Date().toISOString().slice(0,10)}.csv`);
+        download(url, `socorros_${new Date().toISOString().slice(0,10)}.csv`);
       }
 
       function download(url, filename){
         const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        a.remove(); URL.revokeObjectURL(url);
       }
 
-      // --- Eventos ---
+      // ---- Eventos ----
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         const data = extractFormData(form);
-        saveFormData(data);
+        saveItem(data);
         clearForm(form);
       });
 
-      resetButton.addEventListener("click", (e) => {
-        // apenas limpeza de campos (já via type="reset")
-        // se quiser confirmar o reset do formulário, descomente:
-        // if(!confirm("Limpar somente os campos do formulário?")) e.preventDefault();
-      });
+      exportCSVBtn.addEventListener("click", (e) => { e.preventDefault(); exportCSV(); });
+      exportJSONBtn.addEventListener("click", (e) => { e.preventDefault(); exportJSON(); });
+      clearAllBtn.addEventListener("click", (e) => { e.preventDefault(); clearAll(); });
 
-      clearCacheButton.addEventListener("click", (e) => {
-        e.preventDefault();
-        clearCache();
-      });
-
-      exportCSVBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        exportCSV();
-      });
-      exportJSONBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        exportJSON();
-      });
-
-      // Inicializa a UI
+      // Inicialização
       updateReport(loadData());
     });
   </script>
