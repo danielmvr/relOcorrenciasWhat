@@ -1,345 +1,485 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>Formulário de Ocorrências - WhatsApp</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f7f7;
-        }
-
-        body {
-            background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%);
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            background-position: bottom center;
-        }
-
-        .container {
-            display: flex;
-            justify-content: space-between;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: rgba(255, 255, 255, 0.5);
-            /* Altere o último valor (0.5) para ajustar a opacidade */
-            border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .container form {
-            flex: 1;
-            margin-right: 20px;
-        }
-
-        .container .report-container {
-            flex: 1;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            color: #42426F;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        input[type="time"],
-        textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f5f5f5;
-            transition: border-color 0.3s ease;
-        }
-
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        input[type="date"]:focus,
-        input[type="time"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #42426F;
-        }
-
-        textarea[name="ocorrencia"] {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        textarea[name="origemDestino"] {
-            height: 20px;
-        }
-
-        button {
-            display: block;
-            margin-top: 10px;
-            padding: 10px 20px;
-            background-color: #42426F;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button[type="reset"] {
-            background-color: #f44336;
-        }
-
-        button#clearCacheButton {
-            background-color: #ff9800;
-        }
-
-        button:hover {
-            background-color: #303050;
-        }
-
-        .report-container {
-            margin-top: 20px;
-        }
-
-        .report-container h2 {
-            color: #42426F;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .report-entry {
-            margin-bottom: 10px;
-        }
-
-        .report-entry p {
-            font-size: 14px;
-        }
-
-        .report-entry strong {
-            font-weight: bold;
-        }
-
-        .report-entry .editButton {
-            margin-right: 10px;
-        }
-
-        .report-entry .deleteButton {
-            margin-right: 10px;
-            background-color: #f44336;
-}
-    .report-entry .copyButton {
-        background-color: #42426F;
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Formulário de Ocorrências - WhatsApp</title>
+  <style>
+    :root{
+      --primary:#42426F;
+      --primary-hover:#303050;
+      --danger:#f44336;
+      --warning:#ff9800;
+      --copy-done:#9ec6b8;
+      --text:#222;
+      --muted:#666;
     }
 
-    .report-entry .copyButton.copied {
-        background-color: #9ec6b8;
+    /* Unificado: sem duplicar body */
+    body{
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      margin: 0;
+      background: linear-gradient(135deg, #6B87C2 70%, #F8C01A 20%, #831D34 10%) fixed bottom center / cover no-repeat;
     }
-</style>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var form = document.getElementById("serviceForm");
-        var reportDiv = document.getElementById("report");
 
-        // Recuperar dados do cache, se disponíveis
-        var storedData = localStorage.getItem("formData");
-        var formDataArray = storedData ? JSON.parse(storedData) : [];
-        updateReport(formDataArray);
+    .container{
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      max-width: 960px;
+      margin: 24px auto;
+      background-color: rgba(255,255,255,0.55);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      backdrop-filter: blur(3px);
+    }
 
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
+    form{
+      flex: 1;
+      min-width: 280px;
+    }
 
-            var formData = extractFormData(form);
-            saveFormData(formData);
-            clearForm(form);
-        });
+    .report-container{
+      flex: 1;
+      min-width: 280px;
+    }
 
-        var resetButton = document.getElementById("resetButton");
-        resetButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            clearForm(form);
-        });
+    label{
+      display:block;
+      margin: 10px 0 6px;
+      color: var(--primary);
+      font-weight: 600;
+    }
 
-        var clearCacheButton = document.getElementById("clearCacheButton");
-        clearCacheButton.addEventListener("click", function (event) {
-            event.preventDefault();
-            clearCache();
-        });
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    textarea{
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: #f5f5f5;
+      transition: border-color .2s ease;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
 
-        function extractFormData(form) {
-            var formData = {};
-            var inputs = form.querySelectorAll(
-                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-            );
+    input:focus,
+    textarea:focus{
+      outline: none;
+      border-color: var(--primary);
+      background-color: #fff;
+    }
 
-            inputs.forEach(function (input) {
-                formData[input.name] = input.value;
-            });
+    textarea[name="ocorrencia"]{ min-height: 90px; resize: vertical; }
+    textarea[name="origemDestino"]{ min-height: 60px; resize: vertical; }
 
-            return formData;
-        }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
 
-        function saveFormData(formData) {
-            var storedData = localStorage.getItem("formData");
-            var formDataArray = storedData ? JSON.parse(storedData) : [];
+    .btn{
+      display:inline-block;
+      margin-top: 10px;
+      padding: 10px 16px;
+      background-color: var(--primary);
+      color:#fff;
+      border:none;
+      border-radius: 8px;
+      cursor:pointer;
+      transition: transform .04s ease, filter .2s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
 
-            formDataArray.push(formData);
-            localStorage.setItem("formData", JSON.stringify(formDataArray));
+    .btn-primary{ background-color: var(--primary); }
+    .btn-primary:hover{ background-color: var(--primary-hover); }
 
-            updateReport(formDataArray);
-        }
+    .btn-danger{ background-color: var(--danger); }
+    .btn-danger:hover{ filter: brightness(0.95); }
 
-        function clearForm(form) {
-            var inputs = form.querySelectorAll(
-                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-            );
+    .btn-warning{ background-color: var(--warning); }
+    .btn-warning:hover{ filter: brightness(0.95); }
 
-            inputs.forEach(function (input) {
-                input.value = "";
-            });
-        }
+    .btn-copy{ background-color: var(--primary); }
+    .btn-copy:hover{ filter: brightness(0.95); }
+    .btn-copy.copied{ background-color: var(--copy-done); color:#083b2e; }
 
-        function clearCache() {
-            localStorage.removeItem("formData");
-            reportDiv.innerHTML = "";
-        }
+    .actions{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
 
-        function formatBrazilianDate(date) {
-            var parts = date.split("-");
-            return parts[2] + "/" + parts[1] + "/" + parts[0];
-        }
+    .report-container h2{
+      color: var(--primary);
+      text-align:center;
+      margin: 0 0 12px;
+    }
 
-        function updateReport(formDataArray) {
-            reportDiv.innerHTML = "";
+    .empty-state{
+      text-align:center;
+      color: var(--muted);
+      padding: 16px;
+      border:1px dashed #bbb;
+      border-radius: 8px;
+      background:#fafafa;
+    }
 
-            formDataArray.forEach(function (formData, index) {
-                var reportEntry = document.createElement("div");
-                reportEntry.classList.add("report-entry");
+    .report-entry{
+      background:#fff;
+      border:1px solid #e6e6e6;
+      border-radius: 10px;
+      padding: 12px 12px 10px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
 
-                var reportText = document.createElement("p");
-                reportText.innerHTML = `
-                    <strong>Data do Serviço:</strong> ${formatBrazilianDate(formData["dataServico"])}<br>
-                    <strong>Nº do Serviço:</strong> ${formData["numServico"]}<br>
-                    <strong>Veículo:</strong> <strong>*${formData["veiculo"]}*</strong><br>
-                    <strong>Origem/Destino:</strong> ${formData["origemDestino"]}<br>
-                    <strong>Horário de Partida:</strong> ${formData["horarioPartida"]}<br>
-                    <strong>Horário de Chegada:</strong> ${formData["horarioChegada"]}<br>
-                    <strong>Motorista:</strong> ${formData["motorista"]}<br>
-                    <strong>Ocorrência:</strong> ${formData["ocorrencia"]}<br><br>
-                `;
+    .report-entry p{
+      margin: 6px 0;
+      font-size:14px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
 
-                var editButton = document.createElement("button");
-                editButton.innerText = "Editar";
-                editButton.classList.add("editButton");
-                editButton.addEventListener("click", function () {
-                    editFormData(index);
-                });
+    .report-entry strong{ font-weight:700; }
 
-                var deleteButton = document.createElement("button");
-deleteButton.innerText = "Excluir";
-deleteButton.classList.add("deleteButton");
-deleteButton.addEventListener("click", function () {
-deleteFormData(index);
-});
-                var copyButton = document.createElement("button");
-                copyButton.innerText = "Copiar";
-                copyButton.classList.add("copyButton");
-                copyButton.addEventListener("click", function () {
-                    copyToClipboard(reportText);
-                });
+    .toolbar{
+      display:flex;
+      gap:8px;
+      margin-top:10px;
+      justify-content: flex-end;
+    }
 
-                reportEntry.appendChild(reportText);
-                reportEntry.appendChild(editButton);
-                reportEntry.appendChild(deleteButton);
-                reportEntry.appendChild(copyButton);
-
-                reportDiv.appendChild(reportEntry);
-            });
-        }
-
-        function editFormData(index) {
-            var storedData = localStorage.getItem("formData");
-            var formDataArray = storedData ? JSON.parse(storedData) : [];
-
-            var formData = formDataArray[index];
-            var inputs = form.querySelectorAll(
-                "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
-            );
-
-            inputs.forEach(function (input) {
-                input.value = formData[input.name] || "";
-            });
-
-            // Remover o item editado do array
-            formDataArray.splice(index, 1);
-            localStorage.setItem("formData", JSON.stringify(formDataArray));
-
-            updateReport(formDataArray);
-        }
-
-        function deleteFormData(index) {
-            var storedData = localStorage.getItem("formData");
-            var formDataArray = storedData ? JSON.parse(storedData) : [];
-
-            formDataArray.splice(index, 1);
-            localStorage.setItem("formData", JSON.stringify(formDataArray));
-
-            updateReport(formDataArray);
-        }
-
-        function copyToClipboard(element) {
-            var range = document.createRange();
-            range.selectNode(element);
-            window.getSelection().removeAllRanges();
-            window.getSelection().addRange(range);
-
-            try {
-                var successful = document.execCommand("copy");
-                var copyButton = element.parentNode.querySelector(".copyButton");
-                copyButton.classList.add("copied");
-                copyButton.innerText = "Copiado!";
-                setTimeout(function () {
-                    copyButton.classList.remove("copied");
-                    copyButton.innerText = "Copiar";
-                }, 2000);
-            } catch (err) {
-                console.log("Falha ao copiar para a área de transferência: ", err);
-            }
-
-            window.getSelection().removeAllRanges();
-        }
-    });
-</script>
+    @media (max-width: 860px){
+      .container{ flex-direction: column; }
+      .row{ grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <form id="serviceForm">
-            <label for="dataServico">Data do Serviço:</label>
-            <input type="date" name="dataServico" required>
-            <label for="numServico">Nº do Serviço:</label>
-            <input type="text" name="numServico" required>
-            <label for="veiculo">Veículo:</label>
-            <input type="text" name="veiculo" required>
-            <label for="origemDestino">Origem/Destino:</label>
-            <textarea name="origemDestino" required></textarea>
-            <label for="horarioPartida">Horário de Partida:</label>
-            <input type="time" name="horarioPartida" required>
-            <label for="horarioChegada">Horário de Chegada:</label>
-            <input type="time" name="horarioChegada" required>
-            <label for="motorista">Motorista:</label>
-            <input type="text" name="motorista" required>
-            <label for="ocorrencia">Ocorrência:</label>
-            <textarea name="ocorrencia" required></textarea>
-            <button type="submit">Salvar</button>
-            <button id="resetButton" type="
-reset">Limpar</button>
-</form>
-<div class="report-container">
-<h2>Ocorrências</h2>
-<div id="report"></div>
-<button id="clearCacheButton">Limpar Ocorrências</button>
-</div>
-</div>
+  <div class="container">
+    <form id="serviceForm" autocomplete="off" novalidate>
+      <h2 style="margin:0 0 8px; color:var(--primary);">Cadastro de Ocorrências</h2>
 
+      <label for="dataServico">Data do Serviço:</label>
+      <input id="dataServico" type="date" name="dataServico" required>
+
+      <label for="numServico">Nº do Serviço:</label>
+      <input id="numServico" type="text" name="numServico" required>
+
+      <label for="veiculo">Veículo:</label>
+      <input id="veiculo" type="text" name="veiculo" list="veiculosList" placeholder="Ex.: Ônibus 1234" required>
+      <datalist id="veiculosList">
+        <!-- Exemplos (remova/edite conforme seu contexto) -->
+        <option value="Ônibus 1234"></option>
+        <option value="Van 22"></option>
+        <option value="Carro Apoio A-07"></option>
+      </datalist>
+
+      <label for="origemDestino">Origem/Destino:</label>
+      <textarea id="origemDestino" name="origemDestino" placeholder="Ex.: Terminal Central → Bairro X" required></textarea>
+
+      <div class="row">
+        <div>
+          <label for="horarioPartida">Horário de Partida:</label>
+          <input id="horarioPartida" type="time" name="horarioPartida" required>
+        </div>
+        <div>
+          <label for="horarioChegada">Horário de Chegada:</label>
+          <input id="horarioChegada" type="time" name="horarioChegada" required>
+        </div>
+      </div>
+
+      <label for="motorista">Motorista:</label>
+      <input id="motorista" type="text" name="motorista" required>
+
+      <label for="ocorrencia">Ocorrência:</label>
+      <textarea id="ocorrencia" name="ocorrencia" placeholder="Descreva a ocorrência..." required></textarea>
+
+      <div class="actions">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <button id="resetButton" type="reset" class="btn btn-warning">Limpar Formulário</button>
+      </div>
+    </form>
+
+    <div class="report-container">
+      <h2>Ocorrências</h2>
+      <div id="report"></div>
+
+      <div class="toolbar">
+        <button id="exportCSV" class="btn btn-primary" title="Exportar todas em CSV">Exportar CSV</button>
+        <button id="exportJSON" class="btn btn-primary" title="Exportar todas em JSON">Exportar JSON</button>
+        <button id="clearCacheButton" class="btn btn-danger" title="Apagar todas as ocorrências">Limpar Ocorrências</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("serviceForm");
+      const reportDiv = document.getElementById("report");
+      const resetButton = document.getElementById("resetButton");
+      const clearCacheButton = document.getElementById("clearCacheButton");
+      const exportCSVBtn = document.getElementById("exportCSV");
+      const exportJSONBtn = document.getElementById("exportJSON");
+
+      // --- Utilidades de armazenamento (robustas) ---
+      function loadData(){
+        try{
+          const raw = localStorage.getItem("formData");
+          const arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        }catch{
+          return [];
+        }
+      }
+      function saveData(arr){
+        localStorage.setItem("formData", JSON.stringify(arr));
+      }
+
+      // --- Datas e ordenação ---
+      function formatBrazilianDate(dateStr){
+        if(!dateStr) return "";
+        const [y,m,d] = dateStr.split("-");
+        return `${d}/${m}/${y}`;
+      }
+      function makeTimestamp(d, t){ // combina data+hora para ordenar
+        if(!d && !t) return 0;
+        const iso = d ? `${d}T${t || "00:00"}:00` : `1970-01-01T00:00:00`;
+        const ms = Date.parse(iso);
+        return Number.isNaN(ms) ? 0 : ms;
+      }
+
+      // --- Extração e limpeza do formulário ---
+      function extractFormData(formEl){
+        const data = {};
+        const inputs = formEl.querySelectorAll(
+          "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
+        );
+        inputs.forEach(input => { data[input.name] = input.value.trim(); });
+        return data;
+      }
+      function clearForm(formEl){
+        formEl.reset(); // já limpa de forma consistente
+      }
+
+      // --- Construção segura do relatório (sem innerHTML de dados do usuário) ---
+      function line(label, value){
+        const p = document.createElement("p");
+        const strong = document.createElement("strong");
+        strong.textContent = label + " ";
+        const span = document.createElement("span");
+        span.textContent = value ?? "";
+        p.appendChild(strong);
+        p.appendChild(span);
+        return p;
+      }
+
+      async function copyEntryAsText(formData, btn){
+        const lines = [
+          `Data do Serviço: ${formatBrazilianDate(formData.dataServico)}`,
+          `Nº do Serviço: ${formData.numServico}`,
+          `Veículo: *${formData.veiculo}*`,
+          `Origem/Destino: ${formData.origemDestino}`,
+          `Horário de Partida: ${formData.horarioPartida}`,
+          `Horário de Chegada: ${formData.horarioChegada}`,
+          `Motorista: ${formData.motorista}`,
+          `Ocorrência: ${formData.ocorrencia}`,
+          ``
+        ];
+        await navigator.clipboard.writeText(lines.join("\n"));
+        if(btn){
+          btn.classList.add("copied");
+          const old = btn.textContent;
+          btn.textContent = "Copiado!";
+          setTimeout(()=>{ btn.classList.remove("copied"); btn.textContent = old; }, 1800);
+        }
+      }
+
+      function updateReport(arr){
+        reportDiv.innerHTML = "";
+
+        if(!arr.length){
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.textContent = "Nenhuma ocorrência registrada ainda.";
+          reportDiv.appendChild(empty);
+          return;
+        }
+
+        // ordenar por data+hora (mais recentes primeiro)
+        const sorted = [...arr].sort((a,b) => {
+          const ta = makeTimestamp(a.dataServico, a.horarioPartida || a.horarioChegada);
+          const tb = makeTimestamp(b.dataServico, b.horarioPartida || b.horarioChegada);
+          return tb - ta;
+        });
+
+        sorted.forEach((formData) => {
+          const entry = document.createElement("div");
+          entry.className = "report-entry";
+
+          entry.appendChild(line("Data do Serviço:", formatBrazilianDate(formData.dataServico)));
+          entry.appendChild(line("Nº do Serviço:", formData.numServico));
+          entry.appendChild(line("Veículo:", `*${formData.veiculo}*`));
+          entry.appendChild(line("Origem/Destino:", formData.origemDestino));
+          entry.appendChild(line("Horário de Partida:", formData.horarioPartida));
+          entry.appendChild(line("Horário de Chegada:", formData.horarioChegada));
+          entry.appendChild(line("Motorista:", formData.motorista));
+          entry.appendChild(line("Ocorrência:", formData.ocorrencia));
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.className = "btn btn-warning";
+          editBtn.textContent = "Editar";
+          editBtn.addEventListener("click", () => editFormData(formData));
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.textContent = "Excluir";
+          deleteBtn.addEventListener("click", () => deleteFormData(formData));
+
+          const copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "btn btn-copy";
+          copyBtn.textContent = "Copiar";
+          copyBtn.addEventListener("click", async () => {
+            try{ await copyEntryAsText(formData, copyBtn); } catch(e){ console.error(e); }
+          });
+
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+          actions.appendChild(copyBtn);
+
+          entry.appendChild(actions);
+          reportDiv.appendChild(entry);
+        });
+      }
+
+      function saveFormData(newItem){
+        const arr = loadData();
+        arr.push(newItem);
+        saveData(arr);
+        updateReport(arr);
+      }
+
+      function editFormData(item){
+        // Preenche o formulário
+        const inputs = form.querySelectorAll(
+          "input[type='text'], input[type='number'], input[type='date'], input[type='time'], textarea"
+        );
+        inputs.forEach(input => { input.value = item[input.name] || ""; });
+
+        // Remove a ocorrência que está sendo editada
+        const arr = loadData().filter(x => !isSameItem(x, item));
+        saveData(arr);
+        updateReport(arr);
+      }
+
+      function deleteFormData(item){
+        if(!confirm("Excluir esta ocorrência?")) return;
+        const arr = loadData().filter(x => !isSameItem(x, item));
+        saveData(arr);
+        updateReport(arr);
+      }
+
+      function clearCache(){
+        if(!confirm("Tem certeza que deseja remover todas as ocorrências?")) return;
+        localStorage.removeItem("formData");
+        updateReport([]);
+      }
+
+      // Heurística simples para identificar o "mesmo item"
+      function isSameItem(a,b){
+        return a.dataServico === b.dataServico &&
+               a.numServico === b.numServico &&
+               a.veiculo === b.veiculo &&
+               a.origemDestino === b.origemDestino &&
+               a.horarioPartida === b.horarioPartida &&
+               a.horarioChegada === b.horarioChegada &&
+               a.motorista === b.motorista &&
+               a.ocorrencia === b.ocorrencia;
+      }
+
+      // --- Exportações ---
+      function exportJSON(){
+        const arr = loadData();
+        const blob = new Blob([JSON.stringify(arr, null, 2)], {type:"application/json"});
+        const url = URL.createObjectURL(blob);
+        download(url, `ocorrencias_${new Date().toISOString().slice(0,10)}.json`);
+      }
+
+      function exportCSV(){
+        const arr = loadData();
+        if(!arr.length){ alert("Não há dados para exportar."); return; }
+        const headers = [
+          "dataServico","numServico","veiculo","origemDestino",
+          "horarioPartida","horarioChegada","motorista","ocorrencia"
+        ];
+        const escapeCSV = (val="") => {
+          const v = String(val).replace(/"/g,'""');
+          return /[",\n;]/.test(v) ? `"${v}"` : v;
+        };
+        const lines = [
+          headers.join(";"),
+          ...arr.map(o => headers.map(h => escapeCSV(o[h] ?? "")).join(";"))
+        ];
+        const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+        download(url, `ocorrencias_${new Date().toISOString().slice(0,10)}.csv`);
+      }
+
+      function download(url, filename){
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      // --- Eventos ---
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const data = extractFormData(form);
+        saveFormData(data);
+        clearForm(form);
+      });
+
+      resetButton.addEventListener("click", (e) => {
+        // apenas limpeza de campos (já via type="reset")
+        // se quiser confirmar o reset do formulário, descomente:
+        // if(!confirm("Limpar somente os campos do formulário?")) e.preventDefault();
+      });
+
+      clearCacheButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        clearCache();
+      });
+
+      exportCSVBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        exportCSV();
+      });
+      exportJSONBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        exportJSON();
+      });
+
+      // Inicializa a UI
+      updateReport(loadData());
+    });
+  </script>
 </body>
 </html>
