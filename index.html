@@ -190,6 +190,18 @@
       <label for="saidaSocorro">Local e horário da saída do socorro <small>(Ex.: RIO - 08:52)</small>:</label>
       <input id="saidaSocorro" type="text" name="saidaSocorro" placeholder="RIO - 08:52">
 
+      <!-- NOVO CAMPO: Alimentação Fornecida? -->
+      <label>Alimentação Fornecida?</label>
+      <div class="radio-group" role="radiogroup" aria-label="Alimentação Fornecida?">
+        <label class="radio-item">
+          <input type="radio" name="alimentacaoFornecida" value="Sim"> <span>Sim</span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="alimentacaoFornecida" value="Não" checked> <span>Não</span>
+        </label>
+      </div>
+      <!-- FIM NOVO CAMPO -->
+
       <label for="obs">Obs :</label>
       <textarea id="obs" name="obs" placeholder="Observações adicionais..."></textarea>
 
@@ -277,7 +289,7 @@
         return p;
       }
 
-      // >>> ALTERAÇÃO: cópia para WhatsApp com ícones e negrito do "Carro"
+      // >>> Cópia para WhatsApp (com ícones)
       async function copyEntryAsText(item, btn){
         const lines = [
           `📅 Data do Socorro: ${formatBRDate(item.dataSocorro)}`,
@@ -288,6 +300,7 @@
           `⏰ Horário da viagem: ${item.horarioViagem}`,
           `👥 Qtd. clientes: ${item.qtdClientes}`,
           `📦 Encomendas: ${item.encomendas || ""}`,
+          `🍽️ Alimentação Fornecida: ${item.alimentacaoFornecida || ""}`,
           `🧭 Linha: ${item.linha}`,
           `⏱️ Início do Socorro: ${item.inicioSocorro}`,
           `📍 Local do Socorro: ${item.localSocorro}`,
@@ -308,7 +321,7 @@
           setTimeout(()=>{ btn.classList.remove("copied"); btn.textContent = old; }, 1800);
         }
       }
-      // <<< FIM DA ALTERAÇÃO
+      // <<< Fim da cópia
 
       function updateReport(arr){
         reportDiv.innerHTML = "";
@@ -339,6 +352,7 @@
           entry.appendChild(line("Horário da viagem:", item.horarioViagem));
           entry.appendChild(line("Qtd. clientes:", item.qtdClientes));
           entry.appendChild(line("Encomendas:", item.encomendas));
+          entry.appendChild(line("Alimentação Fornecida:", item.alimentacaoFornecida)); /* NOVO */
           entry.appendChild(line("Linha:", item.linha));
           entry.appendChild(line("Início do Socorro:", item.inicioSocorro));
           entry.appendChild(line("Local do Socorro:", item.localSocorro));
@@ -427,7 +441,7 @@
       // ---- Exportações ----
       const CSV_HEADERS = [
         "dataSocorro","carro","motorista","matricula","dataViagem","horarioViagem",
-        "qtdClientes","encomendas","linha","inicioSocorro","localSocorro",
+        "qtdClientes","encomendas","alimentacaoFornecida","linha","inicioSocorro","localSocorro",
         "defeitoMotorista","responsavelManutencao","saidaSocorro","fimSocorro",
         "carroSegue","obs","coordenador","id"
       ];
