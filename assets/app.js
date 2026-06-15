@@ -55,7 +55,7 @@
     var sec = $("#view-" + name); if (sec) sec.classList.add("active");
     $all(".nav button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "painel") renderBoard();
-    if (name === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); }
+    if (name === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); renderLinhas(); }
     if (name === "historico") renderHist();
   }
 
@@ -166,8 +166,13 @@
     $("#frotaList").innerHTML = Store.frota().map(function (v) {
       return '<option value="' + esc(v.veiculo) + '">' + esc(v.modelo + " | " + v.regional) + '</option>';
     }).join("");
-    $("#f-gerente").innerHTML = '<option value="">-</option>' + Store.gerentes().map(function (g) {
-      return '<option value="' + esc(g.nome) + '">' + esc(g.nome) + (g.telefone ? " (" + esc(g.telefone) + ")" : "") + '</option>';
+    var respOpts = '<option value="">-</option>' + Store.gerentes().map(function (g) {
+      return '<option value="' + esc(g.nome) + '">' + esc(g.nome) + '</option>';
+    }).join("");
+    $("#f-gerente").innerHTML = respOpts;
+    var man = $("#f-manutencao"); if (man) man.innerHTML = respOpts;
+    var lin = $("#f-linha"); if (lin) lin.innerHTML = '<option value="">-</option>' + Store.linhas().map(function (l) {
+      return '<option value="' + esc(l) + '">' + esc(l) + '</option>';
     }).join("");
     var fs = $("#filtroStatus");
     fs.innerHTML = '<option value="">Todos os status</option>' + Store.STATUS_ATIVOS.map(function (k) {
@@ -206,25 +211,31 @@
   /* ---------------- MODAL DETALHE ---------------- */
   function telGerente(nome) { if (!nome) return ""; var g = Store.gerentes().filter(function (x) { return x.nome === nome; })[0]; return g && g.telefone ? g.telefone : ""; }
   function whatsApp(o) {
-    return [
-      "Data: " + (o.dataOcorrencia ? fmtDateBR(o.dataOcorrencia) : fmtClock(o.abertaEm)),
-      "Servico: " + (o.servico || ""),
-      "Carro: *" + (o.carro || "") + "*" + (o.carroSegue ? " (segue: " + o.carroSegue + ")" : ""),
-      "Hora da quebra: " + (o.horaQuebra || ""),
-      "Linha: " + (o.linha || ""),
-      "Local: " + (o.localSocorro || ""),
-      "Motorista: " + (o.motorista || "") + (o.matricula ? " (mat " + o.matricula + ")" : ""),
-      "Status: " + (Store.STATUS[o.status] ? Store.STATUS[o.status].label : o.status),
-      "Defeito: " + (o.defeitoMotorista || ""),
-      "Manutencao: " + (o.responsavelManutencao || ""),
-      "Saida do socorro: " + (o.saidaSocorro || ""),
-      "Termino do socorro: " + (o.terminoSocorro || ""),
-      "Encomendas: " + (o.encomendas || "") + " | Alimentacao: " + (o.alimentacaoFornecida || ""),
-      "Qtd. clientes: " + (o.qtdClientes || ""),
-      "Gerente: " + (o.gerenteRegional || "") + (telGerente(o.gerenteRegional) ? " (" + telGerente(o.gerenteRegional) + ")" : "") + " | Coord.: " + (o.coordenador || ""),
-      "Duracao: " + fmtDur(Store.duracaoMs(o)) + (o.status === "finalizada" ? " (final)" : " (em curso)"),
-      o.obs ? "Obs: " + o.obs : ""
-    ].filter(Boolean).join("\n");
+    var emp = empresaDe(o), tipo = tipoCarro(o.carro);
+    var L = [];
+    L.push("🚨 *OCORRÊNCIA - SOCORRO* 🚨");
+    L.push("━━━━━━━━━━━━━━━━");
+    L.push("🚌 Carro: *" + (o.carro || "-") + "*" + (o.carroSegue ? "   ➡️ segue: *" + o.carroSegue + "*" : ""));
+    if (emp.nome) L.push("🏢 Empresa: " + emp.nome + " · " + tipoNome(tipo));
+    if (o.servico) L.push("🔖 Serviço: " + o.servico);
+    if (o.linha) L.push("🧭 Linha: " + o.linha);
+    if (o.localSocorro) L.push("📍 Local: " + o.localSocorro);
+    if (o.dataOcorrencia) L.push("📅 Data da ocorrência: " + fmtDateBR(o.dataOcorrencia));
+    if (o.horaQuebra) L.push("🛠️ Hora da quebra: " + o.horaQuebra);
+    if (o.dataViagem) L.push("🗓️ Data da viagem: " + fmtDateBR(o.dataViagem));
+    if (o.horarioViagem) L.push("⏰ Horário da viagem: " + o.horarioViagem);
+    if (o.motorista) L.push("👤 Motorista: " + o.motorista + (o.matricula ? " (mat " + o.matricula + ")" : ""));
+    L.push("👥 Clientes: " + (o.qtdClientes || "0") + "   📦 Encomendas: " + (o.encomendas || "-") + "   🍽️ Alimentação: " + (o.alimentacaoFornecida || "-"));
+    if (o.defeitoMotorista) L.push("🔧 Defeito: " + o.defeitoMotorista);
+    if (o.responsavelManutencao) L.push("🧰 Manutenção: " + o.responsavelManutencao);
+    if (o.saidaSocorro) L.push("🚐 Saída do socorro: " + o.saidaSocorro);
+    if (o.terminoSocorro) L.push("🏁 Término do socorro: " + o.terminoSocorro);
+    if (o.gerenteRegional) L.push("👔 Responsável Apoio: " + o.gerenteRegional + (telGerente(o.gerenteRegional) ? " (" + telGerente(o.gerenteRegional) + ")" : ""));
+    if (o.coordenador) L.push("🧑‍💼 Coordenador: " + o.coordenador);
+    L.push("━━━━━━━━━━━━━━━━");
+    L.push("⏱️ Status: *" + (Store.STATUS[o.status] ? Store.STATUS[o.status].label : o.status) + "*   ·   Duração: *" + fmtDur(Store.duracaoMs(o)) + "*" + (o.status === "finalizada" ? " (final)" : " (em curso)"));
+    if (o.obs) L.push("📝 Obs: " + o.obs);
+    return L.join("\n");
   }
   function abrirDetalhe(id) {
     var o = Store.obter(id); if (!o) return;
@@ -238,7 +249,7 @@
       ["Defeito", o.defeitoMotorista], ["Manutencao acionada", o.responsavelManutencao],
       ["Saida do socorro", o.saidaSocorro], ["Carro que segue", o.carroSegue],
       ["Qtd. clientes", o.qtdClientes], ["Encomendas", o.encomendas],
-      ["Alimentacao", o.alimentacaoFornecida], ["Gerente regional", o.gerenteRegional],
+      ["Alimentacao", o.alimentacaoFornecida], ["Responsavel Apoio", o.gerenteRegional],
       ["Coordenador", o.coordenador], ["Obs", o.obs]
     ].filter(function (p) { return p[1]; }).map(function (p) {
       return '<p class="row"><b>' + esc(p[0]) + ':</b> ' + esc(p[1]) + '</p>';
@@ -318,8 +329,19 @@
         '</td><td><button class="btn ghost sm" data-action="ger-edit" data-i="' + i + '">editar</button> ' +
         '<button class="btn wine sm" data-action="ger-del" data-nome="' + esc(g.nome) + '">x</button></td></tr>';
     }).join("");
-    var c = $("#gerCount"); if (c) c.textContent = all.length + " gerentes";
-    $("#tblGer").innerHTML = "<thead><tr><th>Gerente</th><th>Telefone</th><th></th></tr></thead><tbody>" + rows + "</tbody>";
+    var c = $("#gerCount"); if (c) c.textContent = all.length + " responsaveis";
+    $("#tblGer").innerHTML = "<thead><tr><th>Responsavel</th><th>Telefone</th><th></th></tr></thead><tbody>" + rows + "</tbody>";
+  }
+  function renderLinhas() {
+    var termo = (($("#buscaLinha") || {}).value || "").toLowerCase();
+    var all = Store.linhas();
+    var rows = all.map(function (l, i) { return { l: l, i: i }; })
+      .filter(function (o) { return !termo || o.l.toLowerCase().indexOf(termo) > -1; })
+      .map(function (o) {
+        return "<tr><td>" + esc(o.l) + '</td><td><button class="btn wine sm" data-action="linha-del" data-i="' + o.i + '">x</button></td></tr>';
+      }).join("");
+    var c = $("#linhaCount"); if (c) c.textContent = all.length + " linhas";
+    $("#tblLinhas").innerHTML = "<thead><tr><th>Linha</th><th></th></tr></thead><tbody>" + rows + "</tbody>";
   }
 
   /* ---------------- HISTORICO ---------------- */
@@ -398,6 +420,7 @@
         $("#sub-localidades").style.display = s === "localidades" ? "" : "none";
         $("#sub-pontos").style.display = s === "pontos" ? "" : "none";
         $("#sub-gerentes").style.display = s === "gerentes" ? "" : "none";
+        $("#sub-linhas").style.display = s === "linhas" ? "" : "none";
       });
     });
     // buscas
@@ -444,6 +467,12 @@
       Store.salvarGerente({ nome: n, telefone: $("#ger-tel").value.trim() });
       $("#ger-nome").value = $("#ger-tel").value = ""; renderGer(); preencherDatalists();
     });
+    $("#addLinha").addEventListener("click", function () {
+      var n = $("#linha-nova").value.trim(); if (!n) return;
+      var arr = Store.linhas(); if (arr.indexOf(n) === -1) arr.push(n);
+      Store.salvarLinhas(arr); $("#linha-nova").value = ""; renderLinhas(); preencherDatalists();
+    });
+    $("#buscaLinha").addEventListener("input", renderLinhas);
     // imports
     $("#impFrota").addEventListener("change", function () {
       var f = this.files[0]; if (!f) return;
@@ -539,6 +568,7 @@
         case "pa-del": var P = Store.pontosApoio(); P.splice(i, 1); Store.salvarPontosApoio(P); renderPa(); break;
         case "ger-del": Store.removerGerente(t.getAttribute("data-nome")); renderGer(); preencherDatalists(); break;
         case "ger-edit": var G = Store.gerentes()[i]; if (G) { $("#ger-nome").value = G.nome; $("#ger-tel").value = G.telefone || ""; } break;
+        case "linha-del": var LN = Store.linhas(); LN.splice(i, 1); Store.salvarLinhas(LN); renderLinhas(); preencherDatalists(); break;
       }
     });
   }

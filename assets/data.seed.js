@@ -1,6 +1,6 @@
-// Dados-semente: Frota.XLS + mapa (KMZ). gerentes = {nome, telefone}. Atualize cadastrosVersao ao regenerar.
+// Dados-semente: Frota.XLS + mapa (KMZ). gerentes = Responsavel Apoio {nome,telefone}; linhas = lista do seletor de Linha.
 window.SEED = {
- "cadastrosVersao": 3,
+ "cadastrosVersao": 4,
  "geradoEm": "2026-06-15",
  "fonteFrota": "Frota.XLS",
  "frota": [
@@ -4539,27 +4539,19 @@ window.SEED = {
  ],
  "gerentes": [
   {
+   "nome": "Trafego Salvador",
+   "telefone": ""
+  },
+  {
+   "nome": "Joseanderson",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego Seabra",
+   "telefone": ""
+  },
+  {
    "nome": "Carlos Passos",
-   "telefone": ""
-  },
-  {
-   "nome": "EXPRESSO GUANABARA",
-   "telefone": ""
-  },
-  {
-   "nome": "Jose Anderson",
-   "telefone": ""
-  },
-  {
-   "nome": "Junior",
-   "telefone": ""
-  },
-  {
-   "nome": "Miguel",
-   "telefone": ""
-  },
-  {
-   "nome": "Mozart",
    "telefone": ""
   },
   {
@@ -4567,11 +4559,51 @@ window.SEED = {
    "telefone": ""
   },
   {
+   "nome": "Trafego Barreiras",
+   "telefone": ""
+  },
+  {
+   "nome": "Marcelo Neto",
+   "telefone": ""
+  },
+  {
+   "nome": "Aurelio",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego Brasilia",
+   "telefone": ""
+  },
+  {
+   "nome": "Leonardo",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego Goiania",
+   "telefone": ""
+  },
+  {
    "nome": "Nelio",
    "telefone": ""
   },
   {
-   "nome": "Thiago",
+   "nome": "Trafego Uberaba",
+   "telefone": ""
+  },
+  {
+   "nome": "Sergio",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego São Paulo",
+   "telefone": ""
+  },
+  {
+   "nome": "Miguel Nazario",
+   "telefone": ""
+  },
+  {
+   "nome": "Marcelo",
    "telefone": ""
   },
   {
@@ -4579,7 +4611,115 @@ window.SEED = {
    "telefone": ""
   },
   {
-   "nome": "Zerbato",
+   "nome": "Trafego Rio de Janeiro",
+   "telefone": ""
+  },
+  {
+   "nome": "Marcos Oliveira",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego Juiz de Fora",
+   "telefone": ""
+  },
+  {
+   "nome": "Trafego Belo Horizonte",
+   "telefone": ""
+  },
+  {
+   "nome": "Junior",
+   "telefone": ""
+  },
+  {
+   "nome": "Thiago Lima",
+   "telefone": ""
+  },
+  {
+   "nome": "Bruno Ferro",
+   "telefone": ""
+  },
+  {
+   "nome": "Carlos Henrique",
+   "telefone": ""
+  },
+  {
+   "nome": "Douglas Alvin",
+   "telefone": ""
+  },
+  {
+   "nome": "Elias Cardoso",
+   "telefone": ""
+  },
+  {
+   "nome": "Fábio Galdino",
+   "telefone": ""
+  },
+  {
+   "nome": "Fernando Saiago",
+   "telefone": ""
+  },
+  {
+   "nome": "Nilson Kanashiro",
+   "telefone": ""
+  },
+  {
+   "nome": "Emanuelle Oliveira",
+   "telefone": ""
+  },
+  {
+   "nome": "Hugo Diniz",
+   "telefone": ""
+  },
+  {
+   "nome": "Jhony Anderson",
+   "telefone": ""
+  },
+  {
+   "nome": "João Pacheco",
+   "telefone": ""
+  },
+  {
+   "nome": "Keliton Pereira",
+   "telefone": ""
+  },
+  {
+   "nome": "Leylane Silva",
+   "telefone": ""
+  },
+  {
+   "nome": "Leonardo Cunha",
+   "telefone": ""
+  },
+  {
+   "nome": "Luciano Batalha",
+   "telefone": ""
+  },
+  {
+   "nome": "Cleber Assis",
+   "telefone": ""
+  },
+  {
+   "nome": "Patrick Alves",
+   "telefone": ""
+  },
+  {
+   "nome": "Gisele de Souza Gomes",
+   "telefone": ""
+  },
+  {
+   "nome": "Vinícius Madeira",
+   "telefone": ""
+  },
+  {
+   "nome": "Rafael Driend",
+   "telefone": ""
+  },
+  {
+   "nome": "Leticia Pineschi",
+   "telefone": ""
+  },
+  {
+   "nome": "Andre Ribeiro",
    "telefone": ""
   }
  ],
@@ -9973,5 +10113,248 @@ window.SEED = {
    "lon": -48.324286,
    "obs": ""
   }
+ ],
+ "linhas": [
+  "ADR x BHZ",
+  "ADR x RIO",
+  "ALF x RIO",
+  "AOZ x NIU",
+  "AOZ x QNT",
+  "AOZ x RIO",
+  "API x RIO",
+  "APS x BSB",
+  "APS x GYN",
+  "AVLA x RIO",
+  "AXN x GYN",
+  "BBT x CPQ",
+  "BBT x PGR",
+  "BBT x TJK",
+  "BCN x BHZ",
+  "BCN x CPQ",
+  "BCN x QNT",
+  "BCN x SAO",
+  "BHZ x ADR",
+  "BHZ x BBT",
+  "BHZ x BCN",
+  "BHZ x CFO",
+  "BHZ x CNE",
+  "BHZ x LVA",
+  "BHZ x MEA",
+  "BHZ x QMI",
+  "BHZ x QNT",
+  "BHZ x QRZ",
+  "BHZ x QSB",
+  "BHZ x RIO",
+  "BHZ x SJK",
+  "BHZ x SJN",
+  "BHZ x SSO",
+  "BMA x VLA",
+  "BMA-N x NCL",
+  "BRA x GYN",
+  "BRA x SSA",
+  "BRA x TAG",
+  "BSB x APS",
+  "BSB x DIV",
+  "BSB x GYN",
+  "BSB x PCT",
+  "BSB x RIO",
+  "BSB x SSA",
+  "BSB x UBA",
+  "BSC x SAO",
+  "BTI x CFO",
+  "BTI x RIO",
+  "CCS x SSA",
+  "CFO x BCN",
+  "CFO x BHZ",
+  "CFO x BTI",
+  "CFO x RIO",
+  "CGB x GYN",
+  "CGB x RIO",
+  "CNE x BHZ",
+  "CNL x SSZ",
+  "COR x GMA",
+  "CPB x RIO",
+  "CPQ x BBT",
+  "CPQ x BCN",
+  "CPQ x RIO",
+  "CRR x GYN",
+  "CRR x SSA",
+  "CSV x RIO",
+  "DIV x BSB",
+  "FRP x SSA",
+  "GCE x NCL",
+  "GIG x RIO",
+  "GMA x COR",
+  "GMA x SRC",
+  "GRB x NP1",
+  "GRB x NP3",
+  "GRC x NCL",
+  "GRC x NP8",
+  "GRC x RIO",
+  "GRC x SOD",
+  "GSBR x NP4",
+  "GTG x NP2",
+  "GTG x NP6",
+  "GTG x NP7",
+  "GTST x NP5",
+  "GYN x APS",
+  "GYN x AXN",
+  "GYN x BRA",
+  "GYN x BSB",
+  "GYN x CGB",
+  "GYN x COR",
+  "GYN x CRR",
+  "GYN x IBT",
+  "GYN x PSS",
+  "GYN x RPP",
+  "GYN x SRC",
+  "GYN x SSA",
+  "IBI x SSA",
+  "IBT x GYN",
+  "ICA x PSS",
+  "IRE x GSEB",
+  "IRE x SAO",
+  "JCE x RIO",
+  "JDF x MDG",
+  "JDF x QNT",
+  "JDF x RIO",
+  "JDF x VLA",
+  "JFA x RIO",
+  "JLBS x COR",
+  "LAR x RIO",
+  "LAZ x GYN",
+  "LAZ x RSTO",
+  "LAZ x SSA",
+  "LDM x SSA",
+  "MAN x SSA",
+  "MCA x NCL",
+  "MCB x SSA",
+  "MDG x JDF",
+  "MDG x TJK",
+  "MEA x BHZ",
+  "MEH x RIO",
+  "MOZ x RIO",
+  "MRI x RIO",
+  "MRI x SAO",
+  "MSI x RIO",
+  "NCL x GRC",
+  "NIU x AOZ",
+  "OPO x BCN",
+  "OPO x RIO",
+  "PCT x BSB",
+  "PGR x BBT",
+  "PGR x RIO",
+  "PNM x RIO",
+  "PNZ x SSA",
+  "PPY x RIO",
+  "PSS x ICA",
+  "QCV x RIO",
+  "QJO x RIO",
+  "QMI x BHZ",
+  "QMI x QVR",
+  "QMI x RIO",
+  "QNT x AOZ",
+  "QNT x BCN",
+  "QNT x BHZ",
+  "QNT x BMA",
+  "QNT x JDF",
+  "QNT x SJK",
+  "QNT x SJN",
+  "QNT x VAS",
+  "QNT x VLA",
+  "QRZ x BHZ",
+  "QSB x BHZ",
+  "QVR x QMI",
+  "RAO x RIO",
+  "RDF x RIO",
+  "RIO x ALF",
+  "RIO x AOZ",
+  "RIO x API",
+  "RIO x AVLA",
+  "RIO x BHZ",
+  "RIO x BMA",
+  "RIO x BSB",
+  "RIO x BTI",
+  "RIO x CGB",
+  "RIO x CPB",
+  "RIO x CPQ",
+  "RIO x CSV",
+  "RIO x GIG",
+  "RIO x JCE",
+  "RIO x JDF",
+  "RIO x JFA",
+  "RIO x LAR",
+  "RIO x MEH",
+  "RIO x MOZ",
+  "RIO x MRI",
+  "RIO x MSI",
+  "RIO x NCL",
+  "RIO x OPO",
+  "RIO x PGR",
+  "RIO x PNM",
+  "RIO x PPY",
+  "RIO x PRES",
+  "RIO x QJO",
+  "RIO x RAO",
+  "RIO x RDF",
+  "RIO x RIO",
+  "RIO x SJK",
+  "RIO x SLR",
+  "RIO x SSO",
+  "RIO x SSZ",
+  "RIO x TJK",
+  "RIO x UDI",
+  "RIO x VAS",
+  "RIO x VLA",
+  "RPP x GYN",
+  "RVD x GYN",
+  "SAO x APS",
+  "SAO x BCN",
+  "SAO x BSB",
+  "SAO x BSC",
+  "SAO x CPQ",
+  "SAO x GATS",
+  "SAO x LVA",
+  "SAO x OPO",
+  "SEB x SSA",
+  "SJK x BHZ",
+  "SJK x QNT",
+  "SJK x RIO",
+  "SJN x BHZ",
+  "SJN x QNT",
+  "SLR x RIO",
+  "SOD x QSB",
+  "SRC x BRA",
+  "SRC x GMA",
+  "SRC x SSA",
+  "SSA x BRA",
+  "SSA x BSB",
+  "SSA x CCS",
+  "SSA x CRR",
+  "SSA x FRP",
+  "SSA x GYN",
+  "SSA x IBI",
+  "SSA x LDM",
+  "SSA x MAN",
+  "SSA x MCB",
+  "SSA x PNZ",
+  "SSA x SEB",
+  "SSA x SRC",
+  "SSO x BHZ",
+  "SSO x RIO",
+  "SSZ x CNL",
+  "SSZ x QNT",
+  "TAG x BRA",
+  "TJK x BBT",
+  "TJK x BCN",
+  "TJK x MDG",
+  "TJK x RIO",
+  "UDI x RIO",
+  "VAS x QNT",
+  "VAS x RIO",
+  "VLA x BMA",
+  "VLA x JDF",
+  "VLA x QNT",
+  "VLA x RIO"
  ]
 };

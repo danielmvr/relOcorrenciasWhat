@@ -42,7 +42,8 @@
       regionais:   (seed.regionais || []).slice(),
       gerentes:    (seed.gerentes || []).slice(),
       localidades: (seed.localidades || []).slice(),
-      pontosApoio: (seed.pontosApoio || []).slice()
+      pontosApoio: (seed.pontosApoio || []).slice(),
+      linhas:      (seed.linhas || []).slice()
     };
   }
   function seedVersao() { return (window.SEED && window.SEED.cadastrosVersao) || 1; }
@@ -212,9 +213,11 @@
     gerentes: function () { return db.cadastros.gerentes.slice(); },
     localidades: function () { return db.cadastros.localidades.slice(); },
     pontosApoio: function () { return db.cadastros.pontosApoio.slice(); },
+    linhas: function () { return (db.cadastros.linhas || []).slice(); },
     buscarVeiculo: buscarVeiculo,
 
     salvarLocalidades: function (arr) { db.cadastros.localidades = arr || []; save(); },
+    salvarLinhas: function (arr) { db.cadastros.linhas = arr || []; save(); },
     salvarPontosApoio: function (arr) { db.cadastros.pontosApoio = arr || []; save(); },
     salvarFrota: function (arr) { if (arr && arr.length) { db.cadastros.frota = arr; save(); } },
     salvarGerente: function (g) {

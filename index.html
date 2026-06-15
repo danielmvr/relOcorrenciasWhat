@@ -49,7 +49,7 @@
     <section id="view-nova" class="view">
       <h2 class="section">Abrir ocorrencia</h2>
       <form id="form-ocorrencia" class="form-card" autocomplete="off">
-        <p class="hint">Todos os campos sao obrigatorios, exceto Observacoes. "Termino do socorro" e preenchido automaticamente na finalizacao.</p>
+        <p class="hint">Campos obrigatorios, exceto Observacoes, Carro que segue e Saida do socorro. "Termino do socorro" e automatico na finalizacao.</p>
         <input type="hidden" name="id" id="f-id">
         <div class="grid2">
           <div>
@@ -58,8 +58,8 @@
             <div class="veic-info" id="veicInfo"></div>
           </div>
           <div>
-            <label>Carro que segue</label>
-            <input type="text" name="carroSegue" list="frotaList" placeholder="11202.U" required>
+            <label>Carro que segue <small>(opcional)</small></label>
+            <input type="text" name="carroSegue" list="frotaList" placeholder="11202.U">
           </div>
         </div>
         <datalist id="frotaList"></datalist>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="grid2">
-          <div><label>Linha <small>(ex.: RIOxCGB)</small></label><input type="text" name="linha" placeholder="RIOxCGB" required></div>
+          <div><label>Linha</label><select name="linha" id="f-linha" required><option value="">-</option></select></div>
           <div><label>Local do socorro</label><input type="text" name="localSocorro" placeholder="Av. Brasil, KM 120" required></div>
         </div>
 
@@ -110,12 +110,12 @@
         <textarea name="defeitoMotorista" placeholder="Relato do motorista..." required></textarea>
 
         <div class="grid2">
-          <div><label>Responsavel da manutencao acionado</label><input type="text" name="responsavelManutencao" required></div>
-          <div><label>Saida do socorro <small>(ex.: RIO - 08:52)</small></label><input type="text" name="saidaSocorro" placeholder="RIO - 08:52" required></div>
+          <div><label>Responsavel da manutencao acionado</label><select name="responsavelManutencao" id="f-manutencao" required><option value="">-</option></select></div>
+          <div><label>Saida do socorro <small>(opcional)</small></label><input type="text" name="saidaSocorro" placeholder="RIO - 08:52"></div>
         </div>
 
         <div class="grid2">
-          <div><label>Gerente regional</label><select name="gerenteRegional" id="f-gerente" required><option value="">-</option></select></div>
+          <div><label>Responsavel Apoio</label><select name="gerenteRegional" id="f-gerente" required><option value="">-</option></select></div>
           <div><label>Coordenador</label><input type="text" name="coordenador" required></div>
         </div>
 
@@ -142,7 +142,8 @@
         <button class="btn sub active" data-sub="frota">Frota</button>
         <button class="btn sub" data-sub="localidades">Localidades / Siglas</button>
         <button class="btn sub" data-sub="pontos">Pontos de apoio</button>
-        <button class="btn sub" data-sub="gerentes">Gerentes</button>
+        <button class="btn sub" data-sub="gerentes">Responsavel Apoio</button>
+        <button class="btn sub" data-sub="linhas">Linhas</button>
       </div>
 
       <div id="sub-frota" class="subpanel">
@@ -185,14 +186,24 @@
 
       <div id="sub-gerentes" class="subpanel" style="display:none">
         <div class="toolbar">
-          <input type="text" id="ger-nome" placeholder="Nome do gerente">
+          <input type="text" id="ger-nome" placeholder="Nome do responsavel">
           <input type="text" id="ger-tel" placeholder="Telefone (ex.: (21) 99999-9999)" style="max-width:260px">
           <button class="btn green sm" id="addGer">Salvar</button>
           <span class="spacer"></span>
           <span class="legend" id="gerCount"></span>
         </div>
         <div class="table-wrap"><table id="tblGer"></table></div>
-        <p class="hint" style="color:#cdd3f0">Dica: para editar um telefone, clique em "editar" na linha (preenche os campos) e clique em Salvar. O telefone entra no texto de WhatsApp da ocorrencia.</p>
+        <p class="hint" style="color:#cdd3f0">Dica: para editar, clique em "editar" na linha (preenche os campos) e clique em Salvar. O telefone (opcional) entra no texto de WhatsApp.</p>
+      </div>
+
+      <div id="sub-linhas" class="subpanel" style="display:none">
+        <div class="toolbar">
+          <input type="text" id="linha-nova" placeholder="Nova linha (ex.: RIO x BHZ)">
+          <button class="btn green sm" id="addLinha">Adicionar</button>
+          <input type="text" id="buscaLinha" placeholder="Buscar linha..." style="max-width:220px">
+          <span class="legend" id="linhaCount"></span>
+        </div>
+        <div class="table-wrap"><table id="tblLinhas"></table></div>
       </div>
     </section>
 

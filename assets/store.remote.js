@@ -37,9 +37,9 @@
     var cad = {
       frota: (seed.frota || []).slice(), regionais: (seed.regionais || []).slice(),
       gerentes: (seed.gerentes || []).slice(), localidades: (seed.localidades || []).slice(),
-      pontosApoio: (seed.pontosApoio || []).slice()
+      pontosApoio: (seed.pontosApoio || []).slice(), linhas: (seed.linhas || []).slice()
     };
-    var cache = [], subs = [], gerentesCache = (seed.gerentes || []).slice();
+    var cache = [], subs = [];
     function fire() { subs.forEach(function (f) { try { f(); } catch (e) {} }); }
     function findIdx(id) { for (var i = 0; i < cache.length; i++) if (cache[i].id === id) return i; return -1; }
     function upsert(o) { var i = findIdx(o.id); if (i >= 0) cache[i] = o; else cache.push(o); }
@@ -56,14 +56,6 @@
         if (res && res.error) { console.error("Supabase select:", res.error.message || res.error); return; }
         cache = (res.data || []).map(rowToObj); fire();
       });
-    }
-    function carregarGerentes() {
-      try {
-        client.from("gerentes").select("*").then(function (res) {
-          if (res && res.error) { console.error("Supabase gerentes:", res.error.message || res.error); return; }
-          if (res.data && res.data.length) { gerentesCache = res.data.map(function (r) { return { nome: r.nome, telefone: r.telefone || "" }; }); fire(); }
-        });
-      } catch (e) { console.error("Supabase gerentes select falhou:", e); }
     }
     function assinarRealtime() {
       try {
@@ -125,7 +117,8 @@
 
       frota: function () { return cad.frota.slice(); },
       regionais: function () { return cad.regionais.slice(); },
-      gerentes: function () { return gerentesCache.slice(); },
+      gerentes: function () { return cad.gerentes.slice(); },
+      linhas: function () { return (cad.linhas || []).slice(); },
       localidades: function () { return cad.localidades.slice(); },
       pontosApoio: function () { return cad.pontosApoio.slice(); },
       buscarVeiculo: buscarVeiculo,
@@ -134,16 +127,13 @@
       salvarFrota: function (arr) { if (arr && arr.length) cad.frota = arr; },
       salvarGerente: function (g) {
         if (!g || !g.nome) return;
-        var i = -1; for (var k = 0; k < gerentesCache.length; k++) { if (gerentesCache[k].nome === g.nome) { i = k; break; } }
+        var i = -1; for (var k = 0; k < cad.gerentes.length; k++) { if (cad.gerentes[k].nome === g.nome) { i = k; break; } }
         var item = { nome: g.nome, telefone: g.telefone || "" };
-        if (i >= 0) gerentesCache[i] = item; else gerentesCache.push(item);
+        if (i >= 0) cad.gerentes[i] = item; else cad.gerentes.push(item);
         fire();
-        try { client.from("gerentes").upsert(item).then(function (r) { if (r && r.error) console.error("Supabase gerentes upsert:", r.error.message || r.error); }); } catch (e) { console.error(e); }
       },
-      removerGerente: function (nome) {
-        gerentesCache = gerentesCache.filter(function (g) { return g.nome !== nome; }); fire();
-        try { client.from("gerentes").delete().eq("nome", nome).then(function (r) { if (r && r.error) console.error("Supabase gerentes delete:", r.error.message || r.error); }); } catch (e) { console.error(e); }
-      },
+      removerGerente: function (nome) { cad.gerentes = cad.gerentes.filter(function (g) { return g.nome !== nome; }); fire(); },
+      salvarLinhas: function (arr) { cad.linhas = arr || []; fire(); },
 
       exportarTudo: function () { return JSON.stringify({ exportadoEm: nowISO(), dados: { ocorrencias: cache.slice(), cadastros: cad } }, null, 2); },
       importarTudo: function (json) { var p = typeof json === "string" ? JSON.parse(json) : json; var novo = p && p.dados ? p.dados : p;
@@ -152,7 +142,7 @@
 
       _carregar: carregar, _assinar: assinarRealtime, _cache: function () { return cache; }
     };
-    carregar(); carregarGerentes(); assinarRealtime();
+    carregar(); assinarRealtime();
     return Store;
   };
 })();
