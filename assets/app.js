@@ -113,7 +113,7 @@
         '<div class="body">' +
           '<div class="card-head">' + busSVG(emp.cor, tipo) +
             '<div class="card-head-txt">' +
-              '<p class="carro">' + esc(o.carro || "?") + (o.carroSegue ? ' <span class="segue">&rarr; ' + esc(o.carroSegue) + '</span>' : '') + '</p>' +
+              '<p class="carro"><span class="cod">' + esc(o.carro || "?") + '</span>' + (o.carroSegue ? '<span class="segue">&rarr; ' + esc(o.carroSegue) + '</span>' : '') + '</p>' +
               '<p class="empresa">' + esc(emp.nome) + (emp.nome ? ' &middot; ' + tipoNome(tipo) : '') + '</p>' +
             '</div>' +
           '</div>' +
@@ -143,6 +143,7 @@
       return [o.carro, o.carroSegue, o.linha, o.motorista, o.localSocorro, o.coordenador]
         .join(" ").toLowerCase().indexOf(termo) > -1;
     });
+    lista.sort(function (a, b) { return Store.duracaoMs(b) - Store.duracaoMs(a); }); // maior duracao primeiro
     $("#badgeAtivas").textContent = Store.listarAtivas().length;
     if (!lista.length) {
       board.innerHTML = '<div class="empty">Nenhuma ocorrencia em andamento.<br>Clique em "+ Nova" para abrir.</div>';
@@ -151,6 +152,8 @@
     board.innerHTML = lista.map(cardHTML).join("");
   }
   function tick() {
+    var rel = $("#relogio"); if (rel) { var dn = new Date(); rel.textContent = pad(dn.getHours()) + ":" + pad(dn.getMinutes()) + ":" + pad(dn.getSeconds()); }
+    var pc = $("#pbCount"); if (pc) pc.textContent = Store.listarAtivas().length;
     $all("#board .crono").forEach(function (c) {
       var ms = Date.now() - Number(c.getAttribute("data-aberta"));
       c.textContent = fmtDur(ms);
