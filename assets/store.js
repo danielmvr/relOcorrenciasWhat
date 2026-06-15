@@ -23,12 +23,14 @@
   var STATUS_ATIVOS = ["aberta", "em_rota", "em_atendimento", "aguardando"];
 
   /* ---- Limiares de urgencia do cronometro (minutos) -------------------- */
-  var URGENCIA = { ok: 30, atencao: 60 }; // <30 verde, 30-60 amarelo, >60 vermelho
+  var URGENCIA = { ok: 30, atencao: 60, critico: 180 }; // <30 verde, 30-60 amarelo, 60-180 vermelho, >180 (3h) extremo
 
   /* ---- Utilidades ------------------------------------------------------ */
   function uid() { return Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
   function nowISO() { return new Date().toISOString(); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function montarInicio(d, h) { if (!d || !h) return null; var ms = Date.parse(d + "T" + h + ":00"); return isNaN(ms) ? null : new Date(ms).toISOString(); }
+  function horaHM(iso) { var d = new Date(iso), p = function (n) { return (n < 10 ? "0" : "") + n; }; return p(d.getHours()) + ":" + p(d.getMinutes()); }
 
   /* ---- Estado em memoria ----------------------------------------------- */
   var db = null;
@@ -85,14 +87,16 @@
 
   /* ---- Calculos de tempo ----------------------------------------------- */
   function duracaoMs(o, ate) {
+    var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
     var fim = o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now());
-    return Math.max(0, fim - new Date(o.abertaEm).getTime());
+    return Math.max(0, fim - base);
   }
   function nivelUrgencia(ms) {
     var min = ms / 60000;
     if (min < URGENCIA.ok) return "ok";
     if (min < URGENCIA.atencao) return "atencao";
-    return "critico";
+    if (min < URGENCIA.critico) return "critico";
+    return "extremo";
   }
 
   /* ---- Frota: busca e auto-preenchimento ------------------------------- */
@@ -131,12 +135,14 @@
         linha: "", localSocorro: "", dataViagem: "", horarioViagem: "",
         qtdClientes: "", encomendas: "Não", alimentacaoFornecida: "Não",
         defeitoMotorista: "", responsavelManutencao: "", saidaSocorro: "",
-        gerenteRegional: "", coordenador: "", obs: ""
+        gerenteRegional: "", coordenador: "", obs: "",
+        servico: "", dataOcorrencia: "", horaQuebra: "", terminoSocorro: ""
       }, dados || {});
       o.id = uid();
       o.status = "aberta";
       o.abertaEm = nowISO();
       o.finalizadaEm = null;
+      o.inicioEm = montarInicio(o.dataOcorrencia, o.horaQuebra) || o.abertaEm;
       // dados derivados da frota
       o.regional = veic ? veic.regional : (dados.regional || "");
       o.placa = veic ? veic.placa : "";
@@ -155,6 +161,7 @@
         var v = buscarVeiculo(patch.carro);
         if (v) { o.regional = v.regional; o.placa = v.placa; o.capacidade = v.capacidade; o.modelo = v.modelo; }
       }
+      var ini = montarInicio(o.dataOcorrencia, o.horaQuebra); if (ini) o.inicioEm = ini;
       save(); return o;
     },
 
@@ -177,6 +184,7 @@
       var o = this.obter(id); if (!o) return null;
       o.status = "finalizada";
       o.finalizadaEm = nowISO();
+      o.terminoSocorro = horaHM(o.finalizadaEm);
       o.duracaoMs = duracaoMs(o);
       o.eventos.push({ ts: o.finalizadaEm, tipo: "finalizacao", texto: texto || "Ocorrencia finalizada" });
       save(); return o;
@@ -184,7 +192,7 @@
 
     reabrir: function (id) {
       var o = this.obter(id); if (!o) return null;
-      o.status = "em_atendimento"; o.finalizadaEm = null; delete o.duracaoMs;
+      o.status = "em_atendimento"; o.finalizadaEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
       o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta" });
       save(); return o;
     },
@@ -209,6 +217,14 @@
     salvarLocalidades: function (arr) { db.cadastros.localidades = arr || []; save(); },
     salvarPontosApoio: function (arr) { db.cadastros.pontosApoio = arr || []; save(); },
     salvarFrota: function (arr) { if (arr && arr.length) { db.cadastros.frota = arr; save(); } },
+    salvarGerente: function (g) {
+      if (!g || !g.nome) return;
+      var L = db.cadastros.gerentes || [], i = -1;
+      for (var k = 0; k < L.length; k++) { if (L[k] && L[k].nome === g.nome) { i = k; break; } }
+      if (i >= 0) L[i] = { nome: g.nome, telefone: g.telefone || "" }; else L.push({ nome: g.nome, telefone: g.telefone || "" });
+      db.cadastros.gerentes = L; save();
+    },
+    removerGerente: function (nome) { db.cadastros.gerentes = (db.cadastros.gerentes || []).filter(function (g) { return g.nome !== nome; }); save(); },
 
     /* ----- Export / Import ----- */
     exportarTudo: function () {

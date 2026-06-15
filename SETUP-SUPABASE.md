@@ -29,6 +29,10 @@ O que fica compartilhado: as **ocorrencias** (painel ao vivo + historico). Os ca
 5. **Distribuir**
    Coloque a pasta do app (com o `supabase-config.js` ja preenchido) onde os coordenadores acessam — pasta de rede, OneDrive compartilhado, ou um servidor web interno. Ao abrir o `index.html`, o rodape deve mostrar **"Tempo real"**. Todos que abrirem essa mesma versao veem e atualizam o mesmo painel ao vivo.
 
+## Cadastro de gerentes (telefone)
+
+Rode tambem `supabase/migration-02-gerentes.sql` (SQL Editor > Run). Isso cria a tabela `gerentes` e ja insere os nomes do mapa. Depois, em **Cadastros > Gerentes**, preencha os telefones — eles passam a aparecer no texto de WhatsApp das ocorrencias e vao alimentar os alertas automaticos na proxima etapa.
+
 ## Migrar o historico que ja existe (modo local)
 
 Se voce ja usou em modo local e quer levar as ocorrencias para o compartilhado: no modo local, va em **Historico > Backup completo** (gera um JSON). Depois, com o app ja em modo compartilhado, use **Historico > Restaurar backup** e selecione esse JSON — os registros serao enviados ao Supabase.

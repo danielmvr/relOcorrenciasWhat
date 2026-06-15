@@ -30,6 +30,11 @@ create table if not exists public.ocorrencias (
   placa                  text,
   modelo                 text,
   capacidade             text,
+  servico                text,
+  data_ocorrencia        text,
+  hora_quebra            text,
+  inicio_em              timestamptz,
+  termino_socorro        text,
   duracao_ms             bigint,
   eventos                jsonb not null default '[]'::jsonb,
   atualizado_em          timestamptz not null default now()
@@ -71,3 +76,19 @@ drop trigger if exists trg_touch_atualizado_em on public.ocorrencias;
 create trigger trg_touch_atualizado_em
   before update on public.ocorrencias
   for each row execute function public.touch_atualizado_em();
+
+-- =====================================================================
+-- Cadastro de Gerentes Regionais (compartilhado, com telefone)
+-- =====================================================================
+create table if not exists public.gerentes (
+  nome     text primary key,
+  telefone text default ''
+);
+alter table public.gerentes enable row level security;
+drop policy if exists "gerentes_anon_total" on public.gerentes;
+create policy "gerentes_anon_total" on public.gerentes
+  for all to anon using (true) with check (true);
+insert into public.gerentes (nome) values
+  ('Carlos Passos'), ('EXPRESSO GUANABARA'), ('Jose Anderson'), ('Junior'),
+  ('Miguel'), ('Mozart'), ('Nathan'), ('Nelio'), ('Thiago'), ('Vicente'), ('Zerbato')
+on conflict (nome) do nothing;

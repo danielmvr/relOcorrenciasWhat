@@ -29,6 +29,8 @@
     if (ymd.indexOf("T") > -1) ymd = ymd.slice(0, 10);
     var p = ymd.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0].slice(2) : ymd;
   }
+  function dataHoje() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function preencherDataHoje() { var el = $("#f-dataOcorrencia"); if (el) el.value = dataHoje(); }
   function copiar(texto, btn) {
     function ok() { if (btn) { var t = btn.textContent; btn.textContent = "Copiado!"; setTimeout(function () { btn.textContent = t; }, 1600); } }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -53,7 +55,7 @@
     var sec = $("#view-" + name); if (sec) sec.classList.add("active");
     $all(".nav button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "painel") renderBoard();
-    if (name === "cadastros") { renderFrota(); renderLoc(); renderPa(); }
+    if (name === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); }
     if (name === "historico") renderHist();
   }
 
@@ -100,12 +102,13 @@
     var s = Store.STATUS[o.status] || Store.STATUS.aberta;
     var emp = empresaDe(o), tipo = tipoCarro(o.carro);
     var ms = Store.duracaoMs(o), urg = Store.nivelUrgencia(ms);
+    var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
     var ult = o.eventos && o.eventos.length ? o.eventos[o.eventos.length - 1] : null;
     var opts = Store.STATUS_ATIVOS.map(function (k) {
       return '<option value="' + k + '"' + (k === o.status ? " selected" : "") + '>' + esc(Store.STATUS[k].label) + '</option>';
     }).join("");
     return '' +
-      '<div class="card" data-id="' + o.id + '">' +
+      '<div class="card' + (urg === "extremo" ? " extremo" : "") + '" data-id="' + o.id + '">' +
         '<div class="topbar" style="background:' + s.cor + '"></div>' +
         '<div class="body">' +
           '<div class="card-head">' + busSVG(emp.cor, tipo) +
@@ -114,8 +117,8 @@
               '<p class="empresa">' + esc(emp.nome) + (emp.nome ? ' &middot; ' + tipoNome(tipo) : '') + '</p>' +
             '</div>' +
           '</div>' +
-          '<p class="linha">' + esc(o.linha || "linha nao informada") + '</p>' +
-          '<div class="crono ' + urg + '" data-aberta="' + new Date(o.abertaEm).getTime() + '">' + fmtDur(ms) + '</div>' +
+          '<p class="linha">' + esc(o.linha || "linha nao informada") + (o.servico ? ' &middot; serv. ' + esc(o.servico) : '') + '</p>' +
+          '<div class="crono ' + urg + '" data-aberta="' + base + '">' + fmtDur(ms) + '</div>' +
           '<p class="row">' + statusBadge(o.status) + '</p>' +
           '<p class="row"><b>Local:</b> ' + esc(o.localSocorro || "-") + '</p>' +
           '<p class="row"><b>Motorista:</b> ' + esc(o.motorista || "-") + '</p>' +
@@ -123,6 +126,7 @@
           '<div class="card-actions">' +
             '<select class="status-sel" data-id="' + o.id + '" title="Mudar status">' + opts + '</select>' +
             '<button class="btn blue sm" data-action="detalhe" data-id="' + o.id + '">Detalhes</button>' +
+            '<button class="btn yellow sm" data-action="copiar" data-id="' + o.id + '">Copiar</button>' +
             '<button class="btn green sm" data-action="finalizar" data-id="' + o.id + '">Finalizar</button>' +
           '</div>' +
           (ult ? '<div class="last-event"><b>' + fmtClock(ult.ts) + '</b> ' + esc(ult.texto) + '</div>' : '') +
@@ -151,7 +155,9 @@
       var ms = Date.now() - Number(c.getAttribute("data-aberta"));
       c.textContent = fmtDur(ms);
       var urg = Store.nivelUrgencia(ms);
-      c.classList.remove("ok", "atencao", "critico"); c.classList.add(urg);
+      c.classList.remove("ok", "atencao", "critico", "extremo"); c.classList.add(urg);
+      var card = c.closest ? c.closest(".card") : null;
+      if (card) card.classList.toggle("extremo", urg === "extremo");
     });
   }
 
@@ -161,7 +167,7 @@
       return '<option value="' + esc(v.veiculo) + '">' + esc(v.modelo + " | " + v.regional) + '</option>';
     }).join("");
     $("#f-gerente").innerHTML = '<option value="">-</option>' + Store.gerentes().map(function (g) {
-      return '<option value="' + esc(g) + '">' + esc(g) + '</option>';
+      return '<option value="' + esc(g.nome) + '">' + esc(g.nome) + (g.telefone ? " (" + esc(g.telefone) + ")" : "") + '</option>';
     }).join("");
     var fs = $("#filtroStatus");
     fs.innerHTML = '<option value="">Todos os status</option>' + Store.STATUS_ATIVOS.map(function (k) {
@@ -198,10 +204,13 @@
   }
 
   /* ---------------- MODAL DETALHE ---------------- */
+  function telGerente(nome) { if (!nome) return ""; var g = Store.gerentes().filter(function (x) { return x.nome === nome; })[0]; return g && g.telefone ? g.telefone : ""; }
   function whatsApp(o) {
     return [
-      "Data: " + fmtClock(o.abertaEm),
+      "Data: " + (o.dataOcorrencia ? fmtDateBR(o.dataOcorrencia) : fmtClock(o.abertaEm)),
+      "Servico: " + (o.servico || ""),
       "Carro: *" + (o.carro || "") + "*" + (o.carroSegue ? " (segue: " + o.carroSegue + ")" : ""),
+      "Hora da quebra: " + (o.horaQuebra || ""),
       "Linha: " + (o.linha || ""),
       "Local: " + (o.localSocorro || ""),
       "Motorista: " + (o.motorista || "") + (o.matricula ? " (mat " + o.matricula + ")" : ""),
@@ -209,9 +218,10 @@
       "Defeito: " + (o.defeitoMotorista || ""),
       "Manutencao: " + (o.responsavelManutencao || ""),
       "Saida do socorro: " + (o.saidaSocorro || ""),
+      "Termino do socorro: " + (o.terminoSocorro || ""),
       "Encomendas: " + (o.encomendas || "") + " | Alimentacao: " + (o.alimentacaoFornecida || ""),
       "Qtd. clientes: " + (o.qtdClientes || ""),
-      "Gerente: " + (o.gerenteRegional || "") + " | Coord.: " + (o.coordenador || ""),
+      "Gerente: " + (o.gerenteRegional || "") + (telGerente(o.gerenteRegional) ? " (" + telGerente(o.gerenteRegional) + ")" : "") + " | Coord.: " + (o.coordenador || ""),
       "Duracao: " + fmtDur(Store.duracaoMs(o)) + (o.status === "finalizada" ? " (final)" : " (em curso)"),
       o.obs ? "Obs: " + o.obs : ""
     ].filter(Boolean).join("\n");
@@ -222,6 +232,7 @@
     $("#m-titulo").innerHTML = busSVG(empM.cor, tipoM) + " Carro " + esc(o.carro || "?");
     $("#m-status").innerHTML = statusBadge(o.status) + ' <span style="color:#bbb;font-size:10px">' + esc(empM.nome) + " &middot; " + tipoNome(tipoM) + "</span>";
     var info = [
+      ["Servico", o.servico], ["Data da ocorrencia", fmtDateBR(o.dataOcorrencia)], ["Hora da quebra", o.horaQuebra], ["Termino do socorro", o.terminoSocorro],
       ["Linha", o.linha], ["Local", o.localSocorro], ["Regional", o.regional],
       ["Motorista", o.motorista], ["Matricula", o.matricula], ["Placa", o.placa],
       ["Defeito", o.defeitoMotorista], ["Manutencao acionada", o.responsavelManutencao],
@@ -242,8 +253,8 @@
     }).join("");
 
     $("#m-body").innerHTML =
-      '<div class="crono ' + Store.nivelUrgencia(Store.duracaoMs(o)) + '" data-aberta="' + new Date(o.abertaEm).getTime() + '">' + fmtDur(Store.duracaoMs(o)) + '</div>' +
-      '<p class="row" style="text-align:center;color:#888;font-size:12px">Aberta em ' + fmtClock(o.abertaEm) + (o.finalizadaEm ? " | Finalizada em " + fmtClock(o.finalizadaEm) : "") + '</p>' +
+      '<div class="crono ' + Store.nivelUrgencia(Store.duracaoMs(o)) + '" data-aberta="' + (o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime()) + '">' + fmtDur(Store.duracaoMs(o)) + '</div>' +
+      '<p class="row" style="text-align:center;color:#888;font-size:12px">Quebra: ' + (o.horaQuebra ? (fmtDateBR(o.dataOcorrencia) + " " + o.horaQuebra) : fmtClock(o.abertaEm)) + (o.terminoSocorro ? " | Termino: " + o.terminoSocorro : "") + (o.finalizadaEm ? " | Finalizada: " + fmtClock(o.finalizadaEm) : "") + '</p>' +
       info +
       '<label>Mudar status</label><div style="display:flex;gap:6px;flex-wrap:wrap">' + stBtns + '</div>' +
       '<label>Registrar medida / atualizacao</label>' +
@@ -300,8 +311,19 @@
     $("#tblPa").innerHTML = "<thead><tr><th>Nome</th><th>Sigla</th><th>Tipo</th><th>Obs</th><th></th></tr></thead><tbody>" + rows + "</tbody>";
   }
 
+  function renderGer() {
+    var all = Store.gerentes();
+    var rows = all.map(function (g, i) {
+      return "<tr><td>" + esc(g.nome) + "</td><td>" + esc(g.telefone || "") +
+        '</td><td><button class="btn ghost sm" data-action="ger-edit" data-i="' + i + '">editar</button> ' +
+        '<button class="btn wine sm" data-action="ger-del" data-nome="' + esc(g.nome) + '">x</button></td></tr>';
+    }).join("");
+    var c = $("#gerCount"); if (c) c.textContent = all.length + " gerentes";
+    $("#tblGer").innerHTML = "<thead><tr><th>Gerente</th><th>Telefone</th><th></th></tr></thead><tbody>" + rows + "</tbody>";
+  }
+
   /* ---------------- HISTORICO ---------------- */
-  var CSV_COLS = ["abertaEm", "finalizadaEm", "carro", "carroSegue", "motorista", "matricula", "linha",
+  var CSV_COLS = ["abertaEm", "dataOcorrencia", "horaQuebra", "terminoSocorro", "servico", "finalizadaEm", "carro", "carroSegue", "motorista", "matricula", "linha",
     "localSocorro", "regional", "defeitoMotorista", "responsavelManutencao", "saidaSocorro",
     "encomendas", "alimentacaoFornecida", "qtdClientes", "gerenteRegional", "coordenador", "obs", "status"];
   function renderHist() {
@@ -375,6 +397,7 @@
         $("#sub-frota").style.display = s === "frota" ? "" : "none";
         $("#sub-localidades").style.display = s === "localidades" ? "" : "none";
         $("#sub-pontos").style.display = s === "pontos" ? "" : "none";
+        $("#sub-gerentes").style.display = s === "gerentes" ? "" : "none";
       });
     });
     // buscas
@@ -392,11 +415,12 @@
       var d = lerForm();
       if (!d.carro) { alert("Informe o carro."); return; }
       if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; Store.criar(d); }
-      e.target.reset(); $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
+      e.target.reset(); preencherDataHoje(); $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
       showView("painel");
     });
+    $("#form-ocorrencia").addEventListener("reset", function () { setTimeout(preencherDataHoje, 0); });
     $("#cancelarEdicao").addEventListener("click", function () {
-      $("#form-ocorrencia").reset(); $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
+      $("#form-ocorrencia").reset(); preencherDataHoje(); $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
     });
     // status select (delegacao change)
     document.addEventListener("change", function (e) {
@@ -414,6 +438,11 @@
       var n = $("#pa-nome").value.trim(); if (!n) return;
       var arr = Store.pontosApoio(); arr.push({ nome: n, sigla: $("#pa-sigla").value.trim().toUpperCase(), tipo: $("#pa-tipo").value.trim(), obs: "" });
       Store.salvarPontosApoio(arr); $("#pa-nome").value = $("#pa-sigla").value = $("#pa-tipo").value = ""; renderPa();
+    });
+    $("#addGer").addEventListener("click", function () {
+      var n = $("#ger-nome").value.trim(); if (!n) return;
+      Store.salvarGerente({ nome: n, telefone: $("#ger-tel").value.trim() });
+      $("#ger-nome").value = $("#ger-tel").value = ""; renderGer(); preencherDatalists();
     });
     // imports
     $("#impFrota").addEventListener("change", function () {
@@ -486,6 +515,7 @@
       var a = t.getAttribute("data-action"), id = t.getAttribute("data-id"), i = t.getAttribute("data-i");
       switch (a) {
         case "detalhe": abrirDetalhe(id); break;
+        case "copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "finalizar":
           if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); }
           break;
@@ -507,6 +537,8 @@
           break;
         case "loc-del": var L = Store.localidades(); L.splice(i, 1); Store.salvarLocalidades(L); renderLoc(); break;
         case "pa-del": var P = Store.pontosApoio(); P.splice(i, 1); Store.salvarPontosApoio(P); renderPa(); break;
+        case "ger-del": Store.removerGerente(t.getAttribute("data-nome")); renderGer(); preencherDatalists(); break;
+        case "ger-edit": var G = Store.gerentes()[i]; if (G) { $("#ger-nome").value = G.nome; $("#ger-tel").value = G.telefone || ""; } break;
       }
     });
   }
@@ -515,7 +547,7 @@
   function renderAtual() {
     if (currentView === "painel") renderBoard();
     else if (currentView === "historico") renderHist();
-    else if (currentView === "cadastros") { renderFrota(); renderLoc(); renderPa(); }
+    else if (currentView === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); }
   }
   function aplicarModo() {
     var chip = $("#modoChip"), txt = $("#modoTexto"), remoto = (window.MODO === "remoto");
@@ -525,6 +557,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     preencherDatalists();
     wire();
+    preencherDataHoje();
     aplicarModo();
     if (Store.onChange) Store.onChange(renderAtual);
     showView("painel");

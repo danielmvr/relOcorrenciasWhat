@@ -1,6 +1,6 @@
-// Dados-semente: Frota.XLS + mapa de coordenacao (KMZ). Atualize cadastrosVersao ao regenerar.
+// Dados-semente: Frota.XLS + mapa (KMZ). gerentes = {nome, telefone}. Atualize cadastrosVersao ao regenerar.
 window.SEED = {
- "cadastrosVersao": 2,
+ "cadastrosVersao": 3,
  "geradoEm": "2026-06-15",
  "fonteFrota": "Frota.XLS",
  "frota": [
@@ -4538,17 +4538,50 @@ window.SEED = {
   }
  ],
  "gerentes": [
-  "Carlos Passos",
-  "EXPRESSO GUANABARA",
-  "Jose Anderson",
-  "Junior",
-  "Miguel",
-  "Mozart",
-  "Nathan",
-  "Nelio",
-  "Thiago",
-  "Vicente",
-  "Zerbato"
+  {
+   "nome": "Carlos Passos",
+   "telefone": ""
+  },
+  {
+   "nome": "EXPRESSO GUANABARA",
+   "telefone": ""
+  },
+  {
+   "nome": "Jose Anderson",
+   "telefone": ""
+  },
+  {
+   "nome": "Junior",
+   "telefone": ""
+  },
+  {
+   "nome": "Miguel",
+   "telefone": ""
+  },
+  {
+   "nome": "Mozart",
+   "telefone": ""
+  },
+  {
+   "nome": "Nathan",
+   "telefone": ""
+  },
+  {
+   "nome": "Nelio",
+   "telefone": ""
+  },
+  {
+   "nome": "Thiago",
+   "telefone": ""
+  },
+  {
+   "nome": "Vicente",
+   "telefone": ""
+  },
+  {
+   "nome": "Zerbato",
+   "telefone": ""
+  }
  ],
  "localidades": [
   {

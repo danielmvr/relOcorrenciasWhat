@@ -29,7 +29,8 @@
         <span class="legend">
           <span><i style="background:var(--ok)"></i>&lt; 30 min</span>
           <span><i style="background:var(--atencao)"></i>30-60 min</span>
-          <span><i style="background:var(--critico)"></i>&gt; 60 min</span>
+          <span><i style="background:var(--critico)"></i>1-3 h</span>
+          <span><i style="background:#8b1020"></i>&gt; 3 h</span>
         </span>
       </div>
       <div class="emp-legend">
@@ -47,7 +48,8 @@
     <!-- ===================== NOVA OCORRENCIA ===================== -->
     <section id="view-nova" class="view">
       <h2 class="section">Abrir ocorrencia</h2>
-      <form id="form-ocorrencia" class="form-card" autocomplete="off" novalidate>
+      <form id="form-ocorrencia" class="form-card" autocomplete="off">
+        <p class="hint">Todos os campos sao obrigatorios, exceto Observacoes. "Termino do socorro" e preenchido automaticamente na finalizacao.</p>
         <input type="hidden" name="id" id="f-id">
         <div class="grid2">
           <div>
@@ -56,26 +58,35 @@
             <div class="veic-info" id="veicInfo"></div>
           </div>
           <div>
-            <label>Carro que segue <small>(opcional)</small></label>
-            <input type="text" name="carroSegue" list="frotaList" placeholder="11202.U">
+            <label>Carro que segue</label>
+            <input type="text" name="carroSegue" list="frotaList" placeholder="11202.U" required>
           </div>
         </div>
         <datalist id="frotaList"></datalist>
 
-        <div class="grid2">
-          <div><label>Motorista</label><input type="text" name="motorista"></div>
-          <div><label>Matricula</label><input type="text" name="matricula"></div>
+        <div class="grid3">
+          <div>
+            <label>Servico <small>(8 digitos, ou 8/8 p/ DD)</small></label>
+            <input type="text" name="servico" id="f-servico" inputmode="numeric" pattern="\d{8}(/\d{8})?" placeholder="12345678 ou 12345678/12345678" title="8 digitos, ou 8/8 digitos para Double Deck" required>
+          </div>
+          <div><label>Data da ocorrencia</label><input type="date" name="dataOcorrencia" id="f-dataOcorrencia" required></div>
+          <div><label>Hora da quebra</label><input type="time" name="horaQuebra" id="f-horaQuebra" required></div>
         </div>
 
         <div class="grid2">
-          <div><label>Linha <small>(ex.: RIOxCGB)</small></label><input type="text" name="linha" placeholder="RIOxCGB"></div>
-          <div><label>Local do socorro</label><input type="text" name="localSocorro" placeholder="Av. Brasil, KM 120"></div>
+          <div><label>Motorista</label><input type="text" name="motorista" required></div>
+          <div><label>Matricula</label><input type="text" name="matricula" required></div>
+        </div>
+
+        <div class="grid2">
+          <div><label>Linha <small>(ex.: RIOxCGB)</small></label><input type="text" name="linha" placeholder="RIOxCGB" required></div>
+          <div><label>Local do socorro</label><input type="text" name="localSocorro" placeholder="Av. Brasil, KM 120" required></div>
         </div>
 
         <div class="grid3">
-          <div><label>Data da viagem</label><input type="date" name="dataViagem"></div>
-          <div><label>Horario da viagem</label><input type="time" name="horarioViagem"></div>
-          <div><label>Qtd. clientes</label><input type="number" name="qtdClientes" min="0" step="1" placeholder="0"></div>
+          <div><label>Data da viagem</label><input type="date" name="dataViagem" required></div>
+          <div><label>Horario da viagem</label><input type="time" name="horarioViagem" required></div>
+          <div><label>Qtd. clientes</label><input type="number" name="qtdClientes" min="0" step="1" placeholder="0" required></div>
         </div>
 
         <div class="grid2">
@@ -96,19 +107,24 @@
         </div>
 
         <label>Defeito passado pelo motorista</label>
-        <textarea name="defeitoMotorista" placeholder="Relato do motorista..."></textarea>
+        <textarea name="defeitoMotorista" placeholder="Relato do motorista..." required></textarea>
 
         <div class="grid2">
-          <div><label>Responsavel da manutencao acionado</label><input type="text" name="responsavelManutencao"></div>
-          <div><label>Saida do socorro <small>(ex.: RIO - 08:52)</small></label><input type="text" name="saidaSocorro" placeholder="RIO - 08:52"></div>
+          <div><label>Responsavel da manutencao acionado</label><input type="text" name="responsavelManutencao" required></div>
+          <div><label>Saida do socorro <small>(ex.: RIO - 08:52)</small></label><input type="text" name="saidaSocorro" placeholder="RIO - 08:52" required></div>
         </div>
 
         <div class="grid2">
-          <div><label>Gerente regional</label><select name="gerenteRegional" id="f-gerente"><option value="">-</option></select></div>
-          <div><label>Coordenador</label><input type="text" name="coordenador"></div>
+          <div><label>Gerente regional</label><select name="gerenteRegional" id="f-gerente" required><option value="">-</option></select></div>
+          <div><label>Coordenador</label><input type="text" name="coordenador" required></div>
         </div>
 
-        <label>Observacoes</label>
+        <div class="grid2">
+          <div><label>Termino do socorro <small>(automatico ao finalizar)</small></label><input type="time" name="terminoSocorro" id="f-termino" disabled></div>
+          <div></div>
+        </div>
+
+        <label>Observacoes <small>(opcional)</small></label>
         <textarea name="obs" placeholder="Observacoes adicionais..."></textarea>
 
         <div class="form-actions">
@@ -126,6 +142,7 @@
         <button class="btn sub active" data-sub="frota">Frota</button>
         <button class="btn sub" data-sub="localidades">Localidades / Siglas</button>
         <button class="btn sub" data-sub="pontos">Pontos de apoio</button>
+        <button class="btn sub" data-sub="gerentes">Gerentes</button>
       </div>
 
       <div id="sub-frota" class="subpanel">
@@ -164,6 +181,18 @@
           <label class="btn sm blue" style="cursor:pointer">Importar KML/CSV/JSON<input type="file" id="impPa" accept=".kml,.csv,.json" hidden></label>
         </div>
         <div class="table-wrap"><table id="tblPa"></table></div>
+      </div>
+
+      <div id="sub-gerentes" class="subpanel" style="display:none">
+        <div class="toolbar">
+          <input type="text" id="ger-nome" placeholder="Nome do gerente">
+          <input type="text" id="ger-tel" placeholder="Telefone (ex.: (21) 99999-9999)" style="max-width:260px">
+          <button class="btn green sm" id="addGer">Salvar</button>
+          <span class="spacer"></span>
+          <span class="legend" id="gerCount"></span>
+        </div>
+        <div class="table-wrap"><table id="tblGer"></table></div>
+        <p class="hint" style="color:#cdd3f0">Dica: para editar um telefone, clique em "editar" na linha (preenche os campos) e clique em Salvar. O telefone entra no texto de WhatsApp da ocorrencia.</p>
       </div>
     </section>
 

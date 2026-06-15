@@ -109,8 +109,12 @@ h2.section{ font-family:var(--pix); font-size:13px; color:var(--paper); margin:4
   border:3px solid var(--line); background:#fff;
 }
 .crono.ok{ color:var(--ok); } .crono.atencao{ color:var(--atencao); }
-.crono.critico{ color:var(--critico); animation:blink 1s steps(2) infinite; }
-@keyframes blink{ 50%{ background:#ffe9e6; } }
+.crono.critico{ color:var(--critico); }
+.crono.extremo{ color:#fff; background:#8b1020; animation:blink 1s steps(2) infinite; }
+@keyframes blink{ 50%{ filter:brightness(1.55); } }
+/* Acima de 3h: fundo do card inteiro pulsa vermelho suavemente */
+.card.extremo{ border-color:#8b1020; box-shadow:4px 4px 0 0 #8b1020; animation:cardPulse 2.4s ease-in-out infinite; }
+@keyframes cardPulse{ 0%,100%{ background:#f7d7d7; } 50%{ background:#eca6a6; } }
 
 .status-badge{
   display:inline-flex; align-items:center; gap:6px; font-family:var(--pix); font-size:8px;
