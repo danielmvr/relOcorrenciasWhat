@@ -65,23 +65,30 @@ class Handler(BaseHTTPRequestHandler):
             tamanho = int(self.headers.get("Content-Length", 0) or 0)
             corpo = self.rfile.read(tamanho).decode("utf-8") if tamanho else ""
             dados = json.loads(corpo) if corpo else {}
-            responsavel = (dados.get("responsavel") or "(sem responsavel)").strip()
             mensagem = dados.get("mensagem") or ""
-            numero = normalizar_numero(dados.get("numero") or "")
-            if not numero:
-                print("")
-                print("[ponte] >>> ENVIO ABORTADO <<<")
-                print("[ponte] Responsavel Apoio '%s' NAO tem telefone cadastrado. Nada enviado." % responsavel)
-                resp = {"ok": False, "abortado": True, "motivo": "Responsavel sem telefone cadastrado"}
-            elif not mensagem.strip():
+            destinos = dados.get("destinos")
+            if not destinos:  # compatibilidade com o formato antigo (1 destino)
+                destinos = [{"numero": dados.get("numero", ""), "nome": dados.get("responsavel", "")}]
+            if not mensagem.strip():
                 print("[ponte] ABORTADO: mensagem vazia.")
                 resp = {"ok": False, "abortado": True, "motivo": "mensagem vazia"}
             else:
+                total = len(destinos)
+                enviados = 0
                 print("")
-                print("[ponte] Enviando para %s (%s) - %d caracteres..." % (responsavel, numero, len(mensagem)))
-                enviar_whatsapp(numero, mensagem)
-                print("[ponte] Enviado para %s (%s)." % (responsavel, numero))
-                resp = {"ok": True, "numero": numero}
+                print("[ponte] Recebido: %d destinatario(s). Enviando UM POR VEZ..." % total)
+                for i, d in enumerate(destinos, 1):
+                    nome = (d.get("nome") or "(sem nome)").strip()
+                    numero = normalizar_numero(d.get("numero") or "")
+                    if not numero:
+                        print("[ponte] (%d/%d) >>> ABORTADO <<< '%s' sem telefone cadastrado." % (i, total, nome))
+                        continue
+                    print("[ponte] (%d/%d) Enviando para %s (%s)..." % (i, total, nome, numero))
+                    enviar_whatsapp(numero, mensagem)
+                    enviados += 1
+                    print("[ponte] (%d/%d) Enviado para %s." % (i, total, nome))
+                print("[ponte] Concluido: %d de %d enviados." % (enviados, total))
+                resp = {"ok": enviados > 0, "enviados": enviados, "total": total}
         except Exception as e:
             print("[ponte] ERRO:", e)
             resp = {"ok": False, "erro": str(e)}

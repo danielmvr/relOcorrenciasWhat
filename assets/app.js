@@ -48,15 +48,40 @@
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
-  function enviarWhats(o) {
+  var escalonadosLocais = {};
+  function montarDestinos(nomes) {
+    var vistos = {}, out = [];
+    nomes.forEach(function (nome) {
+      nome = (nome || "").trim(); if (!nome) return;
+      var chave = nome.toLowerCase(); if (vistos[chave]) return; vistos[chave] = 1;
+      out.push({ numero: telGerente(nome), nome: nome });
+    });
+    return out;
+  }
+  function postPonte(destinos, mensagem) {
     var cfg = window.WHATSAPP_CONFIG;
-    if (!cfg || !cfg.ativo || !cfg.ponteUrl || !o) return;
-    var responsavel = o.gerenteRegional || "";
-    var numero = telGerente(responsavel); // telefone do Responsavel Apoio cadastrado na base
-    try {
-      fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ numero: numero, responsavel: responsavel, mensagem: whatsApp(o) }) })
-        .then(function () {}, function (e) { console.warn("Ponte WhatsApp indisponivel:", e); });
-    } catch (e) { console.warn("Falha ao chamar a ponte WhatsApp:", e); }
+    if (!cfg || !cfg.ativo || !cfg.ponteUrl || !destinos || !destinos.length) return Promise.reject(new Error("envio desligado/sem destinos"));
+    return fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ destinos: destinos, mensagem: mensagem }) });
+  }
+  function enviarWhats(o) { // na criacao: envia ao Responsavel Apoio do card
+    if (!o) return;
+    postPonte(montarDestinos([o.gerenteRegional]), whatsApp(o)).then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+  }
+  function responsaveisEmpresa(o) { // regra de escalonamento por empresa
+    var emp = empresaDe(o).key;
+    if (emp === "REX") return ["Miguel Nazario", "Vinícius Madeira"];
+    if (emp === "UTIL" || emp === "SAMP" || emp === "RAF") return ["Thiago Lima", "Jonhatan Sales"];
+    return [];
+  }
+  function jaEscalou(o) { return (o.eventos || []).some(function (e) { return e.tipo === "escalado3h"; }); }
+  function escalar3h(o) {
+    if (escalonadosLocais[o.id]) return; escalonadosLocais[o.id] = 1; // 1x por sessao (evita repetir)
+    var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)).concat(["Fernando Saiago"]);
+    var mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
+    postPonte(montarDestinos(nomes), mensagem).then(
+      function () { Store.marcarEscalado(o.id); },  // ponte alcancada -> marca p/ nao repetir
+      function () { /* sem ponte nesta maquina: nao marca */ }
+    );
   }
 
   /* ---------------- Navegacao ---------------- */
@@ -181,6 +206,10 @@
       c.classList.remove("ok", "atencao", "critico", "extremo"); c.classList.add(urg);
       var card = c.closest ? c.closest(".card") : null;
       if (card) card.classList.toggle("extremo", urg === "extremo");
+    });
+    // Escalonamento automatico: ao passar de 3h, avisa responsavel + empresa + diretor
+    Store.listarAtivas().forEach(function (o) {
+      if (Store.duracaoMs(o) >= 10800000 && !jaEscalou(o)) escalar3h(o);
     });
   }
 

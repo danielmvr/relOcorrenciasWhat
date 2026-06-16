@@ -111,6 +111,8 @@
         if (status !== "finalizada") o.finalizadaEm = null; fire(); pushDB(o); return o; },
       addEvento: function (id, texto, tipo) { var o = this.obter(id); if (!o || !texto) return null;
         o.eventos.push({ ts: nowISO(), tipo: tipo || "medida", texto: texto }); fire(); pushDB(o); return o; },
+      marcarEscalado: function (id) { var o = this.obter(id); if (!o) return null;
+        o.eventos.push({ ts: nowISO(), tipo: "escalado3h", texto: "Alerta de 3h enviado (responsavel, empresa e diretor)" }); fire(); pushDB(o); return o; },
       finalizarSOS: function (id, texto) { var o = this.obter(id); if (!o) return null;
         if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.duracaoMs = dur(o); }
         o.status = "aguardando";

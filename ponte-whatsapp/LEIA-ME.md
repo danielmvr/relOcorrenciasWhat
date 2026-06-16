@@ -29,15 +29,26 @@ usando o WhatsApp Web logado na maquina.
    - Manual: `pip install --no-cache-dir pywhatkit` e depois `python ponte.py`.
 5. Crie uma ocorrencia no painel. A mensagem vai para o telefone do Responsavel Apoio.
 
-## Transformar em executavel (.exe) - opcional
+## Gerar o executavel (PonteWhats.exe na pasta raiz)
 
-Para rodar sem o cmd/Python aparente, gere um .exe na maquina:
+O `.exe` precisa ser gerado **na propria maquina Windows** (nao da para gerar em outro
+sistema operacional). Basta dar **duplo clique em `build-exe.bat`** (aqui na pasta
+ponte-whatsapp): ele instala o PyInstaller e cria o **`PonteWhats.exe` na pasta raiz**
+do projeto (AppFluxoOcorrencias). Depois e so dar duplo clique no `PonteWhats.exe`.
 
-    pip install --no-cache-dir pyinstaller
-    pyinstaller --onefile --console --name PonteWhats ponte.py
+Comando equivalente (manual, de dentro de ponte-whatsapp):
 
-O `PonteWhats.exe` (pasta `dist`) faz tudo: abre o WhatsApp Web, abre o painel e ativa a ponte.
-Mantenha o console (`--console`) para ver os avisos de envio/abortado.
+    py -m pip install --no-cache-dir pyinstaller pywhatkit
+    py -m PyInstaller --onefile --console --name PonteWhats --distpath .. --workpath build --specpath build --hidden-import pywhatkit --hidden-import pyautogui ponte.py
+
+Observacoes:
+- O `--console` mantem a janela aberta (necessaria para o login/QR e para ver os avisos
+  de envio/abortado).
+- Se ao rodar o .exe faltar algum modulo, gere de novo acrescentando, por ex.,
+  `--hidden-import <modulo>`.
+- A pasta `build` pode ser apagada depois de gerar o .exe.
+- O `PonteWhats.exe` faz tudo: abre o WhatsApp Web (login/QR), abre o painel publicado
+  e mantem a ponte ativa.
 
 ## Importante
 

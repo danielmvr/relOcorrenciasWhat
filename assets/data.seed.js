@@ -1,6 +1,6 @@
 // Dados-semente: Frota.XLS + mapa (KMZ). gerentes = Responsavel Apoio {nome,telefone}; linhas = seletor de Linha.
 window.SEED = {
- "cadastrosVersao": 5,
+ "cadastrosVersao": 6,
  "geradoEm": "2026-06-15",
  "fonteFrota": "Frota.XLS",
  "frota": [
@@ -4725,6 +4725,10 @@ window.SEED = {
   {
    "nome": "Tester",
    "telefone": "(21) 99866-0063"
+  },
+  {
+   "nome": "Jonhatan Sales",
+   "telefone": ""
   }
  ],
  "localidades": [

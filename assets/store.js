@@ -189,6 +189,11 @@
       o.eventos.push({ ts: nowISO(), tipo: tipo || "medida", texto: texto });
       save(); return o;
     },
+    marcarEscalado: function (id) {
+      var o = this.obter(id); if (!o) return null;
+      o.eventos.push({ ts: nowISO(), tipo: "escalado3h", texto: "Alerta de 3h enviado (responsavel, empresa e diretor)" });
+      save(); return o;
+    },
 
     finalizarSOS: function (id, texto) {
       var o = this.obter(id); if (!o) return null;
