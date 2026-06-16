@@ -29,6 +29,13 @@
       <div class="toolbar">
         <input type="text" id="buscaPainel" placeholder="Buscar carro, linha, motorista...">
         <select id="filtroStatus"><option value="">Todos os status</option></select>
+        <span class="filtro-emp" id="filtroEmpresa">
+          <strong>Empresa:</strong>
+          <label><input type="checkbox" value="UTIL"> Util</label>
+          <label><input type="checkbox" value="SAMP"> Sampaio</label>
+          <label><input type="checkbox" value="RAF"> R. Federal</label>
+          <label><input type="checkbox" value="REX"> Real Expresso</label>
+        </span>
         <span class="spacer"></span>
         <span class="legend">
           <span><i style="background:var(--ok)"></i>&lt; 30 min</span>
@@ -240,8 +247,8 @@
 
   <footer class="app-footer">
     <span id="modoChip" class="modo-chip">Modo local</span>
-    Fluxo de Ocorrencias - <span id="modoTexto">dados locais neste navegador</span>.
-    Configure o Supabase em <code>assets/supabase-config.js</code> para o modo compartilhado (veja SETUP-SUPABASE.md).
+    <span class="ver-chip">v1.6</span>
+    Fluxo de Ocorrencias
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

@@ -5,6 +5,7 @@
   "use strict";
   var Store = window.Store;
   var currentView = "painel";
+  var suprimirReset = false;
 
   /* ---------------- Helpers ---------------- */
   function $(s, r) { return (r || document).querySelector(s); }
@@ -98,17 +99,20 @@
       r(7,15,7,4,T)+r(26,15,7,4,T)+r(9,16,3,2,H)+r(28,16,3,2,H) + '</svg>';
   }
 
+  function cronoFreezeMs(o) { return o.socorroEm ? new Date(o.socorroEm).getTime() : (o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : null); }
+  function cronoClasse(o) { return (o.socorroEm || o.finalizadaEm) ? "parado" : Store.nivelUrgencia(Store.duracaoMs(o)); }
   function cardHTML(o) {
     var s = Store.STATUS[o.status] || Store.STATUS.aberta;
     var emp = empresaDe(o), tipo = tipoCarro(o.carro);
-    var ms = Store.duracaoMs(o), urg = Store.nivelUrgencia(ms);
+    var ms = Store.duracaoMs(o);
     var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
+    var cls = cronoClasse(o), fim = cronoFreezeMs(o);
     var ult = o.eventos && o.eventos.length ? o.eventos[o.eventos.length - 1] : null;
     var opts = Store.STATUS_ATIVOS.map(function (k) {
       return '<option value="' + k + '"' + (k === o.status ? " selected" : "") + '>' + esc(Store.STATUS[k].label) + '</option>';
     }).join("");
     return '' +
-      '<div class="card' + (urg === "extremo" ? " extremo" : "") + '" data-id="' + o.id + '">' +
+      '<div class="card' + (cls === "extremo" ? " extremo" : "") + '" data-id="' + o.id + '">' +
         '<div class="topbar" style="background:' + s.cor + '"></div>' +
         '<div class="body">' +
           '<div class="card-head">' + busSVG(emp.cor, tipo) +
@@ -118,7 +122,7 @@
             '</div>' +
           '</div>' +
           '<p class="linha">' + esc(o.linha || "linha nao informada") + (o.servico ? ' &middot; serv. ' + esc(o.servico) : '') + '</p>' +
-          '<div class="crono ' + urg + '" data-aberta="' + base + '">' + fmtDur(ms) + '</div>' +
+          '<div class="crono ' + cls + '" data-aberta="' + base + '"' + (fim ? ' data-fim="' + fim + '"' : '') + '>' + fmtDur(ms) + '</div>' +
           '<p class="row">' + statusBadge(o.status) + '</p>' +
           '<p class="row"><b>Local:</b> ' + esc(o.localSocorro || "-") + '</p>' +
           '<p class="row"><b>Motorista:</b> ' + esc(o.motorista || "-") + '</p>' +
@@ -126,7 +130,8 @@
           '<div class="card-actions">' +
             '<select class="status-sel" data-id="' + o.id + '" title="Mudar status">' + opts + '</select>' +
             '<button class="btn blue sm" data-action="detalhe" data-id="' + o.id + '">Detalhes</button>' +
-            '<button class="btn yellow sm" data-action="copiar" data-id="' + o.id + '">Copiar</button>' +
+            '<button class="btn yellow sm" data-action="copiar" data-id="' + o.id + '">Copiar p/Whats</button>' +
+            (o.socorroEm ? '' : '<button class="btn sos sm" data-action="sos" data-id="' + o.id + '">Finalizar S.O.S. Passageiros</button>') +
             '<button class="btn green sm" data-action="finalizar" data-id="' + o.id + '">Finalizar</button>' +
           '</div>' +
           (ult ? '<div class="last-event"><b>' + fmtClock(ult.ts) + '</b> ' + esc(ult.texto) + '</div>' : '') +
@@ -137,8 +142,10 @@
     var board = $("#board");
     var termo = ($("#buscaPainel").value || "").toLowerCase();
     var fstatus = $("#filtroStatus").value;
+    var empSel = $all("#filtroEmpresa input:checked").map(function (c) { return c.value; });
     var lista = Store.listarAtivas().filter(function (o) {
       if (fstatus && o.status !== fstatus) return false;
+      if (empSel.length && empSel.indexOf(empresaDe(o).key) === -1) return false;
       if (!termo) return true;
       return [o.carro, o.carroSegue, o.linha, o.motorista, o.localSocorro, o.coordenador]
         .join(" ").toLowerCase().indexOf(termo) > -1;
@@ -154,9 +161,12 @@
   function tick() {
     var rel = $("#relogio"); if (rel) { var dn = new Date(); rel.textContent = pad(dn.getHours()) + ":" + pad(dn.getMinutes()) + ":" + pad(dn.getSeconds()); }
     var pc = $("#pbCount"); if (pc) pc.textContent = Store.listarAtivas().length;
-    $all("#board .crono").forEach(function (c) {
-      var ms = Date.now() - Number(c.getAttribute("data-aberta"));
+    $all(".crono[data-aberta]").forEach(function (c) {
+      var aberta = Number(c.getAttribute("data-aberta"));
+      var fimAttr = c.getAttribute("data-fim");
+      var ms = (fimAttr ? Number(fimAttr) : Date.now()) - aberta;
       c.textContent = fmtDur(ms);
+      if (fimAttr) return; // parado (S.O.S./finalizado): mantem a classe
       var urg = Store.nivelUrgencia(ms);
       c.classList.remove("ok", "atencao", "critico", "extremo"); c.classList.add(urg);
       var card = c.closest ? c.closest(".card") : null;
@@ -196,7 +206,7 @@
   }
   function editar(o) {
     var f = $("#form-ocorrencia");
-    f.reset();
+    suprimirReset = true; f.reset(); suprimirReset = false;
     Object.keys(o).forEach(function (k) {
       var el = f.elements[k]; if (!el) return;
       if (el.length && el[0] && el[0].type === "radio") {
@@ -206,6 +216,7 @@
       } else { el.value = o[k] == null ? "" : o[k]; }
     });
     $("#f-id").value = o.id;
+    var tEl = $("#f-termino"); if (tEl) tEl.disabled = !(o.finalizadaEm || o.socorroEm);
     $("#cancelarEdicao").style.display = "";
     onCarro();
     showView("nova");
@@ -238,6 +249,11 @@
     L.push("━━━━━━━━━━━━━━━━");
     L.push("⏱️ Status: *" + (Store.STATUS[o.status] ? Store.STATUS[o.status].label : o.status) + "*   ·   Duração: *" + fmtDur(Store.duracaoMs(o)) + "*" + (o.status === "finalizada" ? " (final)" : " (em curso)"));
     if (o.obs) L.push("📝 Obs: " + o.obs);
+    if (o.eventos && o.eventos.length) {
+      L.push("━━━━━━━━━━━━━━━━");
+      L.push("🕒 *Linha do tempo*");
+      o.eventos.forEach(function (e) { L.push("• " + fmtClock(e.ts) + " — " + (e.texto || "")); });
+    }
     return L.join("\n");
   }
   function abrirDetalhe(id) {
@@ -267,7 +283,7 @@
     }).join("");
 
     $("#m-body").innerHTML =
-      '<div class="crono ' + Store.nivelUrgencia(Store.duracaoMs(o)) + '" data-aberta="' + (o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime()) + '">' + fmtDur(Store.duracaoMs(o)) + '</div>' +
+      '<div class="crono ' + cronoClasse(o) + '" data-aberta="' + (o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime()) + '"' + (cronoFreezeMs(o) ? ' data-fim="' + cronoFreezeMs(o) + '"' : '') + '>' + fmtDur(Store.duracaoMs(o)) + '</div>' +
       '<p class="row" style="text-align:center;color:#888;font-size:12px">Quebra: ' + (o.horaQuebra ? (fmtDateBR(o.dataOcorrencia) + " " + o.horaQuebra) : fmtClock(o.abertaEm)) + (o.terminoSocorro ? " | Termino: " + o.terminoSocorro : "") + (o.finalizadaEm ? " | Finalizada: " + fmtClock(o.finalizadaEm) : "") + '</p>' +
       info +
       '<label>Mudar status</label><div style="display:flex;gap:6px;flex-wrap:wrap">' + stBtns + '</div>' +
@@ -277,8 +293,9 @@
       '<div class="form-actions">' +
         (o.status === "finalizada"
           ? '<button class="btn yellow sm" data-action="m-reabrir" data-id="' + o.id + '">Reabrir</button>'
-          : '<button class="btn green sm" data-action="m-finalizar" data-id="' + o.id + '">Finalizar</button>') +
-        '<button class="btn blue sm" data-action="m-copiar" data-id="' + o.id + '">Copiar WhatsApp</button>' +
+          : ((o.socorroEm ? '' : '<button class="btn sos sm" data-action="m-sos" data-id="' + o.id + '">Finalizar S.O.S. Passageiros</button>') +
+             '<button class="btn green sm" data-action="m-finalizar" data-id="' + o.id + '">Finalizar</button>')) +
+        '<button class="btn blue sm" data-action="m-copiar" data-id="' + o.id + '">Copiar p/Whats</button>' +
         '<button class="btn ghost sm" data-action="m-editar" data-id="' + o.id + '">Editar</button>' +
         '<button class="btn wine sm" data-action="m-excluir" data-id="' + o.id + '">Excluir</button>' +
       '</div>';
@@ -429,6 +446,7 @@
     // buscas
     $("#buscaPainel").addEventListener("input", renderBoard);
     $("#filtroStatus").addEventListener("change", renderBoard);
+    var fe = $("#filtroEmpresa"); if (fe) fe.addEventListener("change", renderBoard);
     $("#buscaFrota").addEventListener("input", renderFrota);
     $("#buscaHist").addEventListener("input", renderHist);
     $("#buscaLoc").addEventListener("input", renderLoc);
@@ -441,12 +459,12 @@
       var d = lerForm();
       if (!d.carro) { alert("Informe o carro."); return; }
       if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; Store.criar(d); }
-      e.target.reset(); preencherDataHoje(); $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
+      e.target.reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
       showView("painel");
     });
-    $("#form-ocorrencia").addEventListener("reset", function () { setTimeout(preencherDataHoje, 0); });
+    $("#form-ocorrencia").addEventListener("reset", function () { if (suprimirReset) return; setTimeout(function () { preencherDataHoje(); $("#f-termino").disabled = true; }, 0); });
     $("#cancelarEdicao").addEventListener("click", function () {
-      $("#form-ocorrencia").reset(); preencherDataHoje(); $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
+      $("#form-ocorrencia").reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
     });
     // status select (delegacao change)
     document.addEventListener("change", function (e) {
@@ -551,12 +569,18 @@
         case "finalizar":
           if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); }
           break;
+        case "sos":
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); }
+          break;
         case "m-status": Store.mudarStatus(id, t.getAttribute("data-status")); abrirDetalhe(id); renderBoard(); break;
         case "m-add":
           var inp = $("#m-evento"); if (inp && inp.value.trim()) { Store.addEvento(id, inp.value.trim()); abrirDetalhe(id); renderBoard(); }
           break;
         case "m-finalizar":
           if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); }
+          break;
+        case "m-sos":
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); }
           break;
         case "m-reabrir": Store.reabrir(id); abrirDetalhe(id); renderBoard(); break;
         case "m-copiar": copiar(whatsApp(Store.obter(id)), t); break;

@@ -19,14 +19,14 @@
   function toSnake(k) { return k.replace(/[A-Z]/g, function (c) { return "_" + c.toLowerCase(); }); }
   function objToRow(o) {
     var row = { id: o.id, status: o.status || "aberta", aberta_em: o.abertaEm || nowISO(),
-      finalizada_em: o.finalizadaEm || null, inicio_em: o.inicioEm || null, duracao_ms: (o.duracaoMs == null ? null : o.duracaoMs),
+      finalizada_em: o.finalizadaEm || null, inicio_em: o.inicioEm || null, socorro_em: o.socorroEm || null, duracao_ms: (o.duracaoMs == null ? null : o.duracaoMs),
       eventos: o.eventos || [] };
     SIMPLES.forEach(function (k) { row[toSnake(k)] = (o[k] == null ? null : o[k]); });
     return row;
   }
   function rowToObj(row) {
     var o = { id: row.id, status: row.status, abertaEm: row.aberta_em, finalizadaEm: row.finalizada_em,
-      duracaoMs: row.duracao_ms, inicioEm: row.inicio_em, eventos: row.eventos || [] };
+      duracaoMs: row.duracao_ms, inicioEm: row.inicio_em, socorroEm: row.socorro_em, eventos: row.eventos || [] };
     SIMPLES.forEach(function (k) { o[k] = row[toSnake(k)]; });
     return o;
   }
@@ -46,7 +46,7 @@
     function buscarVeiculo(c) { if (!c) return null; var a = String(c).trim().toUpperCase();
       for (var i = 0; i < cad.frota.length; i++) if (String(cad.frota[i].veiculo).toUpperCase() === a) return cad.frota[i]; return null; }
     function dur(o, ate) { var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
-      var fim = o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now()); return Math.max(0, fim - base); }
+      var fim = o.socorroEm ? new Date(o.socorroEm).getTime() : (o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now())); return Math.max(0, fim - base); }
     function pushDB(o) {
       try { client.from("ocorrencias").upsert(objToRow(o)).then(function (r) { if (r && r.error) console.error("Supabase upsert:", r.error.message || r.error); }); }
       catch (e) { console.error("Supabase upsert falhou:", e); }
@@ -96,18 +96,30 @@
       atualizar: function (id, patch) { var o = this.obter(id); if (!o) return null; Object.assign(o, patch);
         if (patch && patch.carro) { var v = buscarVeiculo(patch.carro); if (v) { o.regional=v.regional; o.placa=v.placa; o.capacidade=v.capacidade; o.modelo=v.modelo; } }
         var ini = montarInicio(o.dataOcorrencia, o.horaQuebra); if (ini) o.inicioEm = ini;
+        if (o.finalizadaEm || o.socorroEm) o.duracaoMs = dur(o);
+        o.eventos = o.eventos || []; o.eventos.push({ ts: nowISO(), tipo: "edicao", texto: "Ocorrencia editada" + (o.status === "finalizada" ? " (apos finalizacao)" : "") });
         fire(); pushDB(o); return o; },
       mudarStatus: function (id, status, texto) { var o = this.obter(id); if (!o || !L.STATUS[status]) return null;
+        if (o.socorroEm && (status === "em_rota" || status === "em_atendimento" || status === "aberta")) {
+          var pausa = Date.now() - new Date(o.socorroEm).getTime();
+          o.inicioEm = new Date(new Date(o.inicioEm || o.abertaEm).getTime() + pausa).toISOString();
+          o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
+          o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Tempo retomado (cronometro voltou a contar)" });
+        }
         o.status = status; o.eventos.push({ ts: nowISO(), tipo: "status", texto: texto || ("Status: " + L.STATUS[status].label) });
         if (status === "finalizada" && !o.finalizadaEm) o.finalizadaEm = nowISO();
         if (status !== "finalizada") o.finalizadaEm = null; fire(); pushDB(o); return o; },
       addEvento: function (id, texto, tipo) { var o = this.obter(id); if (!o || !texto) return null;
         o.eventos.push({ ts: nowISO(), tipo: tipo || "medida", texto: texto }); fire(); pushDB(o); return o; },
+      finalizarSOS: function (id, texto) { var o = this.obter(id); if (!o) return null;
+        if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.duracaoMs = dur(o); }
+        o.status = "aguardando";
+        o.eventos.push({ ts: nowISO(), tipo: "sos", texto: texto || ("S.O.S. passageiros concluido - tempo parado em " + o.terminoSocorro) }); fire(); pushDB(o); return o; },
       finalizar: function (id, texto) { var o = this.obter(id); if (!o) return null; o.status = "finalizada";
-        o.finalizadaEm = nowISO(); o.terminoSocorro = horaHM(o.finalizadaEm); o.duracaoMs = dur(o);
+        o.finalizadaEm = nowISO(); if (!o.terminoSocorro) o.terminoSocorro = horaHM(o.finalizadaEm); o.duracaoMs = dur(o);
         o.eventos.push({ ts: o.finalizadaEm, tipo: "finalizacao", texto: texto || "Ocorrencia finalizada" }); fire(); pushDB(o); return o; },
       reabrir: function (id) { var o = this.obter(id); if (!o) return null; o.status = "em_atendimento";
-        o.finalizadaEm = null; o.terminoSocorro = ""; delete o.duracaoMs; o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta" }); fire(); pushDB(o); return o; },
+        o.finalizadaEm = null; o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs; o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta (tempo retomado)" }); fire(); pushDB(o); return o; },
       remover: function (id) { var i = findIdx(id); if (i >= 0) cache.splice(i, 1); fire();
         try { client.from("ocorrencias").delete().eq("id", id).then(function (r) { if (r && r.error) console.error("Supabase delete:", r.error.message || r.error); }); }
         catch (e) { console.error("Supabase delete falhou:", e); } },

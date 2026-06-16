@@ -34,6 +34,7 @@ create table if not exists public.ocorrencias (
   data_ocorrencia        text,
   hora_quebra            text,
   inicio_em              timestamptz,
+  socorro_em             timestamptz,
   termino_socorro        text,
   duracao_ms             bigint,
   eventos                jsonb not null default '[]'::jsonb,

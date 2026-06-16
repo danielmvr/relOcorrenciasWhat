@@ -89,7 +89,7 @@
   /* ---- Calculos de tempo ----------------------------------------------- */
   function duracaoMs(o, ate) {
     var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
-    var fim = o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now());
+    var fim = o.socorroEm ? new Date(o.socorroEm).getTime() : (o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now()));
     return Math.max(0, fim - base);
   }
   function nivelUrgencia(ms) {
@@ -163,11 +163,20 @@
         if (v) { o.regional = v.regional; o.placa = v.placa; o.capacidade = v.capacidade; o.modelo = v.modelo; }
       }
       var ini = montarInicio(o.dataOcorrencia, o.horaQuebra); if (ini) o.inicioEm = ini;
+      if (o.finalizadaEm || o.socorroEm) o.duracaoMs = duracaoMs(o);
+      o.eventos = o.eventos || [];
+      o.eventos.push({ ts: nowISO(), tipo: "edicao", texto: "Ocorrencia editada" + (o.status === "finalizada" ? " (apos finalizacao)" : "") });
       save(); return o;
     },
 
     mudarStatus: function (id, status, texto) {
       var o = this.obter(id); if (!o || !STATUS[status]) return null;
+      if (o.socorroEm && (status === "em_rota" || status === "em_atendimento" || status === "aberta")) {
+        var pausa = Date.now() - new Date(o.socorroEm).getTime();
+        o.inicioEm = new Date(new Date(o.inicioEm || o.abertaEm).getTime() + pausa).toISOString();
+        o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
+        o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Tempo retomado (cronometro voltou a contar)" });
+      }
       o.status = status;
       o.eventos.push({ ts: nowISO(), tipo: "status", texto: texto || ("Status: " + STATUS[status].label) });
       if (status === "finalizada" && !o.finalizadaEm) o.finalizadaEm = nowISO();
@@ -181,11 +190,18 @@
       save(); return o;
     },
 
+    finalizarSOS: function (id, texto) {
+      var o = this.obter(id); if (!o) return null;
+      if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.duracaoMs = duracaoMs(o); }
+      o.status = "aguardando";
+      o.eventos.push({ ts: nowISO(), tipo: "sos", texto: texto || ("S.O.S. passageiros concluido - tempo parado em " + o.terminoSocorro) });
+      save(); return o;
+    },
     finalizar: function (id, texto) {
       var o = this.obter(id); if (!o) return null;
       o.status = "finalizada";
       o.finalizadaEm = nowISO();
-      o.terminoSocorro = horaHM(o.finalizadaEm);
+      if (!o.terminoSocorro) o.terminoSocorro = horaHM(o.finalizadaEm);
       o.duracaoMs = duracaoMs(o);
       o.eventos.push({ ts: o.finalizadaEm, tipo: "finalizacao", texto: texto || "Ocorrencia finalizada" });
       save(); return o;
@@ -193,8 +209,8 @@
 
     reabrir: function (id) {
       var o = this.obter(id); if (!o) return null;
-      o.status = "em_atendimento"; o.finalizadaEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
-      o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta" });
+      o.status = "em_atendimento"; o.finalizadaEm = null; o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
+      o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta (tempo retomado)" });
       save(); return o;
     },
 

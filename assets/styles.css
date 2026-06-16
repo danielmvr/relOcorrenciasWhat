@@ -87,6 +87,10 @@ h2.section{ font-family:var(--pix); font-size:15px; color:var(--paper); margin:6
   background:var(--paper); color:var(--text); box-shadow:var(--shadow-sm);
 }
 .spacer{ flex:1; }
+.filtro-emp{ display:inline-flex; gap:12px; flex-wrap:wrap; align-items:center; padding:9px 12px; border:3px solid var(--line); background:var(--paper); box-shadow:var(--shadow-sm); font-size:14px; color:var(--text); }
+.filtro-emp strong{ font-weight:700; color:var(--muted); font-size:12px; }
+.filtro-emp label{ display:inline-flex; align-items:center; gap:5px; margin:0; font-weight:600; color:var(--text); cursor:pointer; }
+.filtro-emp input[type=checkbox]{ width:auto; }
 .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--paper); align-items:center; }
 .legend i{ display:inline-block; width:14px; height:14px; border:2px solid var(--line); margin-right:6px; vertical-align:-2px; }
 .emp-legend{ display:flex; flex-wrap:wrap; gap:12px 16px; align-items:center; color:var(--paper); font-size:13px; margin:-4px 0 16px; }
@@ -104,6 +108,7 @@ h2.section{ font-family:var(--pix); font-size:15px; color:var(--paper); margin:6
 .btn.blue{ background:var(--blue); } .btn.green{ background:var(--green); }
 .btn.yellow{ background:var(--yellow); color:var(--ink); } .btn.wine{ background:var(--wine); }
 .btn.ghost{ background:#3a3f63; }
+.btn.sos{ background:#1f9d8f; }
 .btn.sm{ font-size:10px; padding:8px 10px; }
 
 /* ---------- Painel de cards ---------- */
@@ -131,6 +136,7 @@ h2.section{ font-family:var(--pix); font-size:15px; color:var(--paper); margin:6
 }
 .crono.ok{ color:var(--ok); } .crono.atencao{ color:var(--atencao); } .crono.critico{ color:var(--critico); }
 .crono.extremo{ color:#fff; background:var(--extremo); animation:blink 1s steps(2) infinite; }
+.crono.parado{ color:#1d6b3a; background:#d7f0d7; } /* S.O.S. concluido / finalizada: tempo parado */
 @keyframes blink{ 50%{ filter:brightness(1.6); } }
 /* Acima de 3h: o card inteiro pulsa vermelho suavemente */
 .card.extremo{ border-color:var(--extremo); box-shadow:5px 5px 0 0 var(--extremo); animation:cardPulse 2.4s ease-in-out infinite; }
@@ -188,6 +194,8 @@ tbody tr:hover{ background:var(--paper-2); }
 .modal-head .bus{ vertical-align:middle; }
 .modal-body{ padding:18px; }
 .modal-body .crono{ font-family:var(--pix); font-size:40px; text-align:center; padding:12px; border:4px solid var(--line); background:#fff; margin-bottom:4px; }
+.modal-body .crono.extremo{ color:#fff; background:var(--extremo); animation:blink 1s steps(2) infinite; }
+.modal-body .crono.parado{ color:#1d6b3a; background:#d7f0d7; }
 .modal-body .row{ font-size:15px; margin:5px 0; }
 .timeline{ list-style:none; margin:12px 0; padding:0; border-left:4px solid var(--primary); }
 .timeline li{ position:relative; padding:7px 0 7px 18px; font-size:14px; }
@@ -199,6 +207,7 @@ tbody tr:hover{ background:var(--paper-2); }
 .app-footer code{ color:var(--blue); }
 .modo-chip{ display:inline-block; font-family:var(--pix); font-size:9px; padding:5px 8px; border:2px solid var(--line); background:#3a3f63; color:#cdd3f0; margin-right:9px; }
 .modo-chip.on{ background:var(--green); color:#fff; }
+.ver-chip{ display:inline-block; font-family:var(--pix); font-size:9px; padding:5px 8px; border:2px solid var(--line); background:var(--blue); color:#fff; margin-right:9px; }
 
 /* ---------- Responsivo: laptop do operador ---------- */
 @media (max-width:820px){
