@@ -4728,7 +4728,7 @@ window.SEED = {
   },
   {
    "nome": "Jonhatan Sales",
-   "telefone": "21 97430-9252"
+   "telefone": "(21) 97430-9252"
   }
  ],
  "localidades": [
