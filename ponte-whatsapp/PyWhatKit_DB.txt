@@ -1,0 +1,10 @@
+Date: 16/6/2026
+Time: 13:11
+Phone Number: +5521998660063
+Message: 🚨 *OCORRÊNCIA - SOCORRO* 🚨━━━━━━━━━━━━━━━━🚌 Carro: *1901.R* ➡️ segue: *1902.R*🏢 Empresa: Real Expresso · Carro Baixo🔖 Serviço: 12345678🧭 Linha: RIO x BSB📍 Local: Rod. Novo Rio📅 Data da ocorrência: 16/06/26🛠️ Hora da quebra: 13:05🗓️ Data da viagem: 16/06/26⏰ Horário da viagem: 12:30👤 Motorista: Carlos (mat 12345)👥 Clientes: 29 📦 Encomendas: Sim 🍽️ Alimentação: Não🔧 Defeito: (teste) Carro não deu partida.🧰 Manutenção: João Pacheco🚐 Saída do socorro: RIO - 13:10👔 Responsável Apoio: Thiago Lima🧑‍💼 Coordenador: Jessica━━━━━━━━━━━━━━━━⏱️ Status: *Aberta* · Duração: *00:06:38* (em curso)📝 Obs: (teste)━━━━━━━━━━━━━━━━🕒 *Linha do tempo*• 16/06 13:11 — Ocorrencia aberta
+--------------------
+Date: 16/6/2026
+Time: 13:24
+Phone Number: +5521998660063
+Message: 🚨 *OCORRÊNCIA - SOCORRO* 🚨━━━━━━━━━━━━━━━━🚌 Carro: *11609.F* ➡️ segue: *20502.F*🏢 Empresa: Rapido Federal · Double Deck🔖 Serviço: 12345678🧭 Linha: RIO x ALF📍 Local: Novo Rio📅 Data da ocorrência: 16/06/26🛠️ Hora da quebra: 13:20🗓️ Data da viagem: 16/06/26⏰ Horário da viagem: 13:00👤 Motorista: Luis (mat 1234)👥 Clientes: 41 📦 Encomendas: Não 🍽️ Alimentação: Não🔧 Defeito: (teste)🧰 Manutenção: Marcelo🚐 Saída do socorro: RIO - 13:20👔 Responsável Apoio: Thiago Lima🧑‍💼 Coordenador: Fabio━━━━━━━━━━━━━━━━⏱️ Status: *Aberta* · Duração: *00:04:05* (em curso)📝 Obs: (teste)━━━━━━━━━━━━━━━━🕒 *Linha do tempo*• 16/06 13:24 — Ocorrencia aberta
+--------------------

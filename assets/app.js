@@ -48,6 +48,16 @@
     var url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
+  function enviarWhats(o) {
+    var cfg = window.WHATSAPP_CONFIG;
+    if (!cfg || !cfg.ativo || !cfg.ponteUrl || !o) return;
+    var responsavel = o.gerenteRegional || "";
+    var numero = telGerente(responsavel); // telefone do Responsavel Apoio cadastrado na base
+    try {
+      fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ numero: numero, responsavel: responsavel, mensagem: whatsApp(o) }) })
+        .then(function () {}, function (e) { console.warn("Ponte WhatsApp indisponivel:", e); });
+    } catch (e) { console.warn("Falha ao chamar a ponte WhatsApp:", e); }
+  }
 
   /* ---------------- Navegacao ---------------- */
   function showView(name) {
@@ -180,7 +190,7 @@
       return '<option value="' + esc(v.veiculo) + '">' + esc(v.modelo + " | " + v.regional) + '</option>';
     }).join("");
     var respOpts = '<option value="">-</option>' + Store.gerentes().map(function (g) {
-      return '<option value="' + esc(g.nome) + '">' + esc(g.nome) + '</option>';
+      return '<option value="' + esc(g.nome) + '"' + (g.telefone ? ' style="font-weight:bold"' : '') + '>' + esc(g.nome) + '</option>';
     }).join("");
     $("#f-gerente").innerHTML = respOpts;
     var man = $("#f-manutencao"); if (man) man.innerHTML = respOpts;
@@ -458,7 +468,7 @@
       e.preventDefault();
       var d = lerForm();
       if (!d.carro) { alert("Informe o carro."); return; }
-      if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; Store.criar(d); }
+      if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; var novo = Store.criar(d); enviarWhats(novo); }
       e.target.reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
       showView("painel");
     });

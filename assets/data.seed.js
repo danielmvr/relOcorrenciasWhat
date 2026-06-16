@@ -1,6 +1,6 @@
-// Dados-semente: Frota.XLS + mapa (KMZ). gerentes = Responsavel Apoio {nome,telefone}; linhas = lista do seletor de Linha.
+// Dados-semente: Frota.XLS + mapa (KMZ). gerentes = Responsavel Apoio {nome,telefone}; linhas = seletor de Linha.
 window.SEED = {
- "cadastrosVersao": 4,
+ "cadastrosVersao": 5,
  "geradoEm": "2026-06-15",
  "fonteFrota": "Frota.XLS",
  "frota": [
@@ -4540,99 +4540,99 @@ window.SEED = {
  "gerentes": [
   {
    "nome": "Trafego Salvador",
-   "telefone": ""
+   "telefone": "(71) 8548-5884"
   },
   {
    "nome": "Joseanderson",
-   "telefone": ""
+   "telefone": "(71) 9982-6704"
   },
   {
    "nome": "Trafego Seabra",
-   "telefone": ""
+   "telefone": "(75) 9108-005"
   },
   {
    "nome": "Carlos Passos",
-   "telefone": ""
+   "telefone": "(61) 9836-8187"
   },
   {
    "nome": "Nathan",
-   "telefone": ""
+   "telefone": "(77) 9977-0127"
   },
   {
    "nome": "Trafego Barreiras",
-   "telefone": ""
+   "telefone": "(77) 9118-6203"
   },
   {
    "nome": "Marcelo Neto",
-   "telefone": ""
+   "telefone": "(62) 8177-8477"
   },
   {
    "nome": "Aurelio",
-   "telefone": ""
+   "telefone": "(21) 97192-3498"
   },
   {
    "nome": "Trafego Brasilia",
-   "telefone": ""
+   "telefone": "(61) 8104-0310"
   },
   {
    "nome": "Leonardo",
-   "telefone": ""
+   "telefone": "(62) 9159-5637"
   },
   {
    "nome": "Trafego Goiania",
-   "telefone": ""
+   "telefone": "(62) 8402-4598"
   },
   {
    "nome": "Nelio",
-   "telefone": ""
+   "telefone": "(24) 98828-0341"
   },
   {
    "nome": "Trafego Uberaba",
-   "telefone": ""
+   "telefone": "(34) 9157-9586"
   },
   {
    "nome": "Sergio",
-   "telefone": ""
+   "telefone": "(13) 99602-8639"
   },
   {
    "nome": "Trafego São Paulo",
-   "telefone": ""
+   "telefone": "(11) 98609-0139"
   },
   {
    "nome": "Miguel Nazario",
-   "telefone": ""
+   "telefone": "(62) 9603-7510"
   },
   {
    "nome": "Marcelo",
-   "telefone": ""
+   "telefone": "(12) 98109-6874"
   },
   {
    "nome": "Vicente",
-   "telefone": ""
+   "telefone": "(24) 98156-6373"
   },
   {
    "nome": "Trafego Rio de Janeiro",
-   "telefone": ""
+   "telefone": "(21) 99479-6581"
   },
   {
    "nome": "Marcos Oliveira",
-   "telefone": ""
+   "telefone": "(21) 97357-5500"
   },
   {
    "nome": "Trafego Juiz de Fora",
-   "telefone": ""
+   "telefone": "(32) 883-8827"
   },
   {
    "nome": "Trafego Belo Horizonte",
-   "telefone": ""
+   "telefone": "(31) 8674-4414"
   },
   {
    "nome": "Junior",
-   "telefone": ""
+   "telefone": "(31) 8711-5907"
   },
   {
    "nome": "Thiago Lima",
-   "telefone": ""
+   "telefone": "(21) 97671-1116"
   },
   {
    "nome": "Bruno Ferro",
@@ -4656,11 +4656,11 @@ window.SEED = {
   },
   {
    "nome": "Fernando Saiago",
-   "telefone": ""
+   "telefone": "(21) 98849-2941"
   },
   {
    "nome": "Nilson Kanashiro",
-   "telefone": ""
+   "telefone": "(13) 99619-8355"
   },
   {
    "nome": "Emanuelle Oliveira",
@@ -4692,7 +4692,7 @@ window.SEED = {
   },
   {
    "nome": "Luciano Batalha",
-   "telefone": ""
+   "telefone": "(31) 98674-4195"
   },
   {
    "nome": "Cleber Assis",
@@ -4708,7 +4708,7 @@ window.SEED = {
   },
   {
    "nome": "Vinícius Madeira",
-   "telefone": ""
+   "telefone": "(21) 97028-8026"
   },
   {
    "nome": "Rafael Driend",
@@ -4721,6 +4721,10 @@ window.SEED = {
   {
    "nome": "Andre Ribeiro",
    "telefone": ""
+  },
+  {
+   "nome": "Tester",
+   "telefone": "(21) 99866-0063"
   }
  ],
  "localidades": [
