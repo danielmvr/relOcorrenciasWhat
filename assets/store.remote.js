@@ -68,6 +68,50 @@
       } catch (e) { console.error("Realtime indisponivel:", e); }
     }
 
+    // ---- Cadastros compartilhados (tabela "cadastros": uma linha por tipo) ----
+    var TIPOS = ["gerentes", "linhas", "localidades", "pontosApoio", "frota"];
+    function seedVer() { return (window.SEED && window.SEED.cadastrosVersao) || 1; }
+    function pushCad(tipo) {
+      try { client.from("cadastros").upsert({ tipo: tipo, itens: cad[tipo] || [] }).then(function (r) { if (r && r.error) console.error("Supabase cadastros upsert (" + tipo + "):", r.error.message || r.error); }); }
+      catch (e) { console.error("Supabase cadastros upsert falhou:", e); }
+    }
+    function pushVersao(v) {
+      try { client.from("cadastros").upsert({ tipo: "_versao", itens: v }).then(function () {}); } catch (e) {}
+    }
+    function mergeStrings(dst, seedArr) { var out = (dst || []).slice(); (seedArr || []).forEach(function (s) { if (out.indexOf(s) < 0) out.push(s); }); return out; }
+    function mergeFrota(dst, seedArr) { var out = (dst || []).slice(), have = {}; out.forEach(function (x) { have[String(x.veiculo).toUpperCase()] = 1; }); (seedArr || []).forEach(function (s) { var k = String(s.veiculo).toUpperCase(); if (!have[k]) { out.push(s); have[k] = 1; } }); return out; }
+    function mergeGerentes(dst, seedArr) { var out = (dst || []).slice(), have = {}; out.forEach(function (x) { have[x.nome] = 1; }); (seedArr || []).forEach(function (s) { if (!have[s.nome]) { out.push({ nome: s.nome, telefone: s.telefone || "" }); have[s.nome] = 1; } }); return out; }
+    function mergeTipo(tipo, seedArr) {
+      if (tipo === "gerentes") return mergeGerentes(cad[tipo], seedArr);
+      if (tipo === "frota") return mergeFrota(cad[tipo], seedArr);
+      return mergeStrings(cad[tipo], seedArr);
+    }
+    function carregarCadastros() {
+      client.from("cadastros").select("*").then(function (res) {
+        if (res && res.error) { console.error("Supabase cadastros select:", res.error.message || res.error); return; }
+        var map = {}; (res.data || []).forEach(function (r) { map[r.tipo] = r.itens; });
+        var storedVer = (typeof map._versao === "number") ? map._versao : 0;
+        var sv = seedVer(), mudou = [];
+        TIPOS.forEach(function (tipo) {
+          var seedArr = (seed[tipo] || []);
+          if (map[tipo] == null) { cad[tipo] = seedArr.slice(); mudou.push(tipo); }           // banco vazio: carga inicial do seed
+          else { cad[tipo] = map[tipo]; if (sv > storedVer) { var m = mergeTipo(tipo, seedArr); if (m.length !== cad[tipo].length) { cad[tipo] = m; mudou.push(tipo); } } }
+        });
+        mudou.forEach(pushCad);
+        if (sv > storedVer) pushVersao(sv);
+        fire();
+      });
+    }
+    function assinarCadastros() {
+      try {
+        client.channel("cadastros-rt")
+          .on("postgres_changes", { event: "*", schema: "public", table: "cadastros" }, function (payload) {
+            var row = payload.new; if (!row || !row.tipo || row.tipo === "_versao") return;
+            if (TIPOS.indexOf(row.tipo) >= 0) { cad[row.tipo] = row.itens || []; fire(); }
+          }).subscribe();
+      } catch (e) { console.error("Realtime cadastros indisponivel:", e); }
+    }
+
     var Store = {
       MODO: "remoto",
       STATUS: L.STATUS, STATUS_ATIVOS: L.STATUS_ATIVOS, URGENCIA: L.URGENCIA,
@@ -136,18 +180,18 @@
       localidades: function () { return cad.localidades.slice(); },
       pontosApoio: function () { return cad.pontosApoio.slice(); },
       buscarVeiculo: buscarVeiculo,
-      salvarLocalidades: function (arr) { cad.localidades = arr || []; },
-      salvarPontosApoio: function (arr) { cad.pontosApoio = arr || []; },
-      salvarFrota: function (arr) { if (arr && arr.length) cad.frota = arr; },
+      salvarLocalidades: function (arr) { cad.localidades = arr || []; pushCad("localidades"); fire(); },
+      salvarPontosApoio: function (arr) { cad.pontosApoio = arr || []; pushCad("pontosApoio"); fire(); },
+      salvarFrota: function (arr) { if (arr && arr.length) { cad.frota = arr; pushCad("frota"); fire(); } },
       salvarGerente: function (g) {
         if (!g || !g.nome) return;
         var i = -1; for (var k = 0; k < cad.gerentes.length; k++) { if (cad.gerentes[k].nome === g.nome) { i = k; break; } }
         var item = { nome: g.nome, telefone: g.telefone || "" };
         if (i >= 0) cad.gerentes[i] = item; else cad.gerentes.push(item);
-        fire();
+        pushCad("gerentes"); fire();
       },
-      removerGerente: function (nome) { cad.gerentes = cad.gerentes.filter(function (g) { return g.nome !== nome; }); fire(); },
-      salvarLinhas: function (arr) { cad.linhas = arr || []; fire(); },
+      removerGerente: function (nome) { cad.gerentes = cad.gerentes.filter(function (g) { return g.nome !== nome; }); pushCad("gerentes"); fire(); },
+      salvarLinhas: function (arr) { cad.linhas = arr || []; pushCad("linhas"); fire(); },
 
       exportarTudo: function () { return JSON.stringify({ exportadoEm: nowISO(), dados: { ocorrencias: cache.slice(), cadastros: cad } }, null, 2); },
       importarTudo: function (json) { var p = typeof json === "string" ? JSON.parse(json) : json; var novo = p && p.dados ? p.dados : p;
@@ -157,6 +201,7 @@
       _carregar: carregar, _assinar: assinarRealtime, _cache: function () { return cache; }
     };
     carregar(); assinarRealtime();
+    carregarCadastros(); assinarCadastros();
     return Store;
   };
 })();
