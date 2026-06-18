@@ -47,6 +47,8 @@ img{ image-rendering:pixelated; }
   text-shadow:3px 3px 0 var(--wine); letter-spacing:1px; margin:0;
 }
 .brand small{ display:block; font-size:9px; color:var(--blue); margin-top:7px; letter-spacing:0; }
+.app-logo{ height:48px; width:auto; display:block; flex:0 0 auto; }
+.app-logo + .brand{ padding-left:18px; border-left:3px solid var(--line); }
 .nav{ display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; }
 .nav button{
   font-family:var(--pix); font-size:11px; color:#fff; background:var(--primary);
@@ -91,6 +93,10 @@ h2.section{ font-family:var(--pix); font-size:15px; color:var(--paper); margin:6
 .filtro-emp strong{ font-weight:700; color:var(--muted); font-size:12px; }
 .filtro-emp label{ display:inline-flex; align-items:center; gap:5px; margin:0; font-weight:600; color:var(--text); cursor:pointer; }
 .filtro-emp input[type=checkbox]{ width:auto; }
+.filtro-data{ display:inline-flex; gap:10px; flex-wrap:wrap; align-items:center; padding:9px 12px; border:3px solid var(--line); background:var(--paper); box-shadow:var(--shadow-sm); font-size:14px; color:var(--text); }
+.filtro-data strong{ font-weight:700; color:var(--muted); font-size:12px; }
+.filtro-data label{ display:inline-flex; align-items:center; gap:5px; margin:0; font-weight:600; color:var(--text); }
+.filtro-data input[type=date]{ width:auto; padding:7px 9px; font-size:14px; }
 .legend{ display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--paper); align-items:center; }
 .legend i{ display:inline-block; width:14px; height:14px; border:2px solid var(--line); margin-right:6px; vertical-align:-2px; }
 .emp-legend{ display:flex; flex-wrap:wrap; gap:12px 16px; align-items:center; color:var(--paper); font-size:13px; margin:-4px 0 16px; }
@@ -213,6 +219,7 @@ tbody tr:hover{ background:var(--paper-2); }
 @media (max-width:820px){
   .grid2,.grid3{ grid-template-columns:1fr; }
   .brand{ font-size:14px; } .nav button{ font-size:9px; padding:9px 10px; }
+  .app-logo{ height:34px; } .app-logo + .brand{ padding-left:12px; }
   .pb-title{ font-size:14px; } .pb-clock{ font-size:22px; }
   .card .crono{ font-size:32px; } .cards-grid{ grid-template-columns:1fr; }
 }

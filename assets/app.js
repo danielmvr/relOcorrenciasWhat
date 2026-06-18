@@ -420,9 +420,17 @@
   var CSV_COLS = ["abertaEm", "dataOcorrencia", "horaQuebra", "terminoSocorro", "terminoData", "servico", "finalizadaEm", "carro", "carroSegue", "motorista", "matricula", "linha",
     "localSocorro", "regional", "defeitoMotorista", "responsavelManutencao", "saidaSocorro",
     "encomendas", "alimentacaoFornecida", "qtdClientes", "gerenteRegional", "coordenador", "obs", "status"];
+  function ymdISO(iso) { if (!iso) return ""; var d = new Date(iso); if (isNaN(d)) return ""; return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function renderHist() {
     var termo = ($("#buscaHist").value || "").toLowerCase();
+    var empSel = $all("#histEmpresa input:checked").map(function (c) { return c.value; });
+    var de = (($("#histDe") || {}).value) || "";
+    var ate = (($("#histAte") || {}).value) || "";
     var lista = Store.listarFinalizadas().filter(function (o) {
+      if (empSel.length && empSel.indexOf(empresaDe(o).key) === -1) return false;
+      var dOco = o.dataOcorrencia || ymdISO(o.abertaEm);
+      if (de && (!dOco || dOco < de)) return false;
+      if (ate && (!dOco || dOco > ate)) return false;
       return !termo || [o.carro, o.linha, o.motorista, o.localSocorro, o.coordenador].join(" ").toLowerCase().indexOf(termo) > -1;
     });
     var rows = lista.map(function (o) {
@@ -503,6 +511,15 @@
     var fe = $("#filtroEmpresa"); if (fe) fe.addEventListener("change", renderBoard);
     $("#buscaFrota").addEventListener("input", renderFrota);
     $("#buscaHist").addEventListener("input", renderHist);
+    var he = $("#histEmpresa"); if (he) he.addEventListener("change", renderHist);
+    var hd = $("#histDe"); if (hd) hd.addEventListener("change", renderHist);
+    var ha = $("#histAte"); if (ha) ha.addEventListener("change", renderHist);
+    var hl = $("#histLimpar"); if (hl) hl.addEventListener("click", function () {
+      if (hd) hd.value = ""; if (ha) ha.value = "";
+      $all("#histEmpresa input:checked").forEach(function (c) { c.checked = false; });
+      var bh = $("#buscaHist"); if (bh) bh.value = "";
+      renderHist();
+    });
     $("#buscaLoc").addEventListener("input", renderLoc);
     $("#buscaPa").addEventListener("input", renderPa);
     // carro -> info
