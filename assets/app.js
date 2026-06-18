@@ -421,18 +421,21 @@
     "localSocorro", "regional", "defeitoMotorista", "responsavelManutencao", "saidaSocorro",
     "encomendas", "alimentacaoFornecida", "qtdClientes", "gerenteRegional", "coordenador", "obs", "status"];
   function ymdISO(iso) { if (!iso) return ""; var d = new Date(iso); if (isNaN(d)) return ""; return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-  function renderHist() {
+  function histFiltradas() {
     var termo = ($("#buscaHist").value || "").toLowerCase();
     var empSel = $all("#histEmpresa input:checked").map(function (c) { return c.value; });
     var de = (($("#histDe") || {}).value) || "";
     var ate = (($("#histAte") || {}).value) || "";
-    var lista = Store.listarFinalizadas().filter(function (o) {
+    return Store.listarFinalizadas().filter(function (o) {
       if (empSel.length && empSel.indexOf(empresaDe(o).key) === -1) return false;
       var dOco = o.dataOcorrencia || ymdISO(o.abertaEm);
       if (de && (!dOco || dOco < de)) return false;
       if (ate && (!dOco || dOco > ate)) return false;
       return !termo || [o.carro, o.linha, o.motorista, o.localSocorro, o.coordenador].join(" ").toLowerCase().indexOf(termo) > -1;
     });
+  }
+  function renderHist() {
+    var lista = histFiltradas();
     var rows = lista.map(function (o) {
       var sec = (o.socorroEm && Store.duracaoSecundariaMs) ? fmtDur(Store.duracaoSecundariaMs(o)) : "-";
       return "<tr><td>" + fmtClock(o.abertaEm) + "</td><td>" + esc(o.carro) + "</td><td>" + esc(o.linha) +
@@ -444,7 +447,7 @@
       (rows || '<tr><td colspan="7" style="text-align:center;color:#888;padding:20px">Nenhuma ocorrencia finalizada ainda.</td></tr>') + "</tbody>";
   }
   function exportarCSV() {
-    var lista = Store.listarFinalizadas(); if (!lista.length) { alert("Nada para exportar."); return; }
+    var lista = histFiltradas(); if (!lista.length) { alert("Nada para exportar (com os filtros atuais)."); return; }
     function cell(v) { v = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(v) ? '"' + v + '"' : v; }
     var linhas = [CSV_COLS.concat(["duracao", "duracao_sos_mecanico"]).join(";")];
     lista.forEach(function (o) {
@@ -612,7 +615,8 @@
     // historico export/backup
     $("#expCSV").addEventListener("click", exportarCSV);
     $("#expJSON").addEventListener("click", function () {
-      baixar(JSON.stringify(Store.listarFinalizadas(), null, 2), "ocorrencias_" + new Date().toISOString().slice(0, 10) + ".json", "application/json");
+      var lista = histFiltradas(); if (!lista.length) { alert("Nada para exportar (com os filtros atuais)."); return; }
+      baixar(JSON.stringify(lista, null, 2), "ocorrencias_" + new Date().toISOString().slice(0, 10) + ".json", "application/json");
     });
     $("#backup").addEventListener("click", function () {
       baixar(Store.exportarTudo(), "backup_fluxo_" + new Date().toISOString().slice(0, 10) + ".json", "application/json");
