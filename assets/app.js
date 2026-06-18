@@ -31,7 +31,7 @@
     var p = ymd.split("-"); return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0].slice(2) : ymd;
   }
   function dataHoje() { var d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
-  function preencherDataHoje() { var el = $("#f-dataOcorrencia"); if (el) el.value = dataHoje(); }
+  function preencherDataHoje() { var el = $("#f-dataOcorrencia"); if (el) el.value = dataHoje(); var td = $("#f-terminoData"); if (td) td.value = dataHoje(); }
   function copiar(texto, btn) {
     function ok() { if (btn) { var t = btn.textContent; btn.textContent = "Copiado!"; setTimeout(function () { btn.textContent = t; }, 1600); } }
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -207,6 +207,10 @@
       var card = c.closest ? c.closest(".card") : null;
       if (card) card.classList.toggle("extremo", urg === "extremo");
     });
+    $all(".dur-sec[data-aberta]").forEach(function (c) {
+      var ab = Number(c.getAttribute("data-aberta")), f = c.getAttribute("data-fim");
+      c.textContent = fmtDur((f ? Number(f) : Date.now()) - ab);
+    });
     // Escalonamento automatico: ao passar de 3h, avisa responsavel + empresa + diretor
     Store.listarAtivas().forEach(function (o) {
       if (Store.duracaoMs(o) >= 10800000 && !jaEscalou(o)) escalar3h(o);
@@ -255,7 +259,9 @@
       } else { el.value = o[k] == null ? "" : o[k]; }
     });
     $("#f-id").value = o.id;
-    var tEl = $("#f-termino"); if (tEl) tEl.disabled = !(o.finalizadaEm || o.socorroEm);
+    var travado = !(o.finalizadaEm || o.socorroEm);
+    var tEl = $("#f-termino"); if (tEl) tEl.disabled = travado;
+    var tdEl = $("#f-terminoData"); if (tdEl) tdEl.disabled = travado;
     $("#cancelarEdicao").style.display = "";
     onCarro();
     showView("nova");
@@ -287,6 +293,7 @@
     if (o.coordenador) L.push("🧑‍💼 Coordenador: " + o.coordenador);
     L.push("━━━━━━━━━━━━━━━━");
     L.push("⏱️ Status: *" + (Store.STATUS[o.status] ? Store.STATUS[o.status].label : o.status) + "*   ·   Duração: *" + fmtDur(Store.duracaoMs(o)) + "*" + (o.status === "finalizada" ? " (final)" : " (em curso)"));
+    if (o.socorroEm && Store.duracaoSecundariaMs) L.push("🔧 Duração SOS Mecânico: *" + fmtDur(Store.duracaoSecundariaMs(o)) + "*");
     if (o.obs) L.push("📝 Obs: " + o.obs);
     if (o.eventos && o.eventos.length) {
       L.push("━━━━━━━━━━━━━━━━");
@@ -301,7 +308,7 @@
     $("#m-titulo").innerHTML = busSVG(empM.cor, tipoM) + " Carro " + esc(o.carro || "?");
     $("#m-status").innerHTML = statusBadge(o.status) + ' <span style="color:#bbb;font-size:10px">' + esc(empM.nome) + " &middot; " + tipoNome(tipoM) + "</span>";
     var info = [
-      ["Servico", o.servico], ["Data da ocorrencia", fmtDateBR(o.dataOcorrencia)], ["Hora da quebra", o.horaQuebra], ["Termino do socorro", o.terminoSocorro],
+      ["Servico", o.servico], ["Data da ocorrencia", fmtDateBR(o.dataOcorrencia)], ["Hora da quebra", o.horaQuebra], ["Termino do socorro", o.terminoSocorro], ["Data do termino", fmtDateBR(o.terminoData)],
       ["Linha", o.linha], ["Local", o.localSocorro], ["Regional", o.regional],
       ["Motorista", o.motorista], ["Matricula", o.matricula], ["Placa", o.placa],
       ["Defeito", o.defeitoMotorista], ["Manutencao acionada", o.responsavelManutencao],
@@ -321,9 +328,15 @@
       return '<li><span class="t">' + fmtClock(e.ts) + '</span><br>' + esc(e.texto) + '</li>';
     }).join("");
 
+    var baseMs = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
+    var durSecMs = Store.duracaoSecundariaMs ? Store.duracaoSecundariaMs(o) : null;
+    var secHTML = o.socorroEm
+      ? '<p class="row" style="text-align:center;color:#9aa;font-size:13px;margin-top:-4px">Duração SOS Mecânico: <b class="dur-sec" data-aberta="' + baseMs + '"' + (o.finalizadaEm ? ' data-fim="' + new Date(o.finalizadaEm).getTime() + '"' : '') + '>' + fmtDur(durSecMs == null ? 0 : durSecMs) + '</b></p>'
+      : '';
     $("#m-body").innerHTML =
-      '<div class="crono ' + cronoClasse(o) + '" data-aberta="' + (o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime()) + '"' + (cronoFreezeMs(o) ? ' data-fim="' + cronoFreezeMs(o) + '"' : '') + '>' + fmtDur(Store.duracaoMs(o)) + '</div>' +
-      '<p class="row" style="text-align:center;color:#888;font-size:12px">Quebra: ' + (o.horaQuebra ? (fmtDateBR(o.dataOcorrencia) + " " + o.horaQuebra) : fmtClock(o.abertaEm)) + (o.terminoSocorro ? " | Termino: " + o.terminoSocorro : "") + (o.finalizadaEm ? " | Finalizada: " + fmtClock(o.finalizadaEm) : "") + '</p>' +
+      '<div class="crono ' + cronoClasse(o) + '" data-aberta="' + baseMs + '"' + (cronoFreezeMs(o) ? ' data-fim="' + cronoFreezeMs(o) + '"' : '') + '>' + fmtDur(Store.duracaoMs(o)) + '</div>' +
+      secHTML +
+      '<p class="row" style="text-align:center;color:#888;font-size:12px">Quebra: ' + (o.horaQuebra ? (fmtDateBR(o.dataOcorrencia) + " " + o.horaQuebra) : fmtClock(o.abertaEm)) + (o.terminoSocorro ? " | Termino: " + (o.terminoData ? fmtDateBR(o.terminoData) + " " : "") + o.terminoSocorro : "") + (o.finalizadaEm ? " | Finalizada: " + fmtClock(o.finalizadaEm) : "") + '</p>' +
       info +
       '<label>Mudar status</label><div style="display:flex;gap:6px;flex-wrap:wrap">' + stBtns + '</div>' +
       '<label>Registrar medida / atualizacao</label>' +
@@ -404,7 +417,7 @@
   }
 
   /* ---------------- HISTORICO ---------------- */
-  var CSV_COLS = ["abertaEm", "dataOcorrencia", "horaQuebra", "terminoSocorro", "servico", "finalizadaEm", "carro", "carroSegue", "motorista", "matricula", "linha",
+  var CSV_COLS = ["abertaEm", "dataOcorrencia", "horaQuebra", "terminoSocorro", "terminoData", "servico", "finalizadaEm", "carro", "carroSegue", "motorista", "matricula", "linha",
     "localSocorro", "regional", "defeitoMotorista", "responsavelManutencao", "saidaSocorro",
     "encomendas", "alimentacaoFornecida", "qtdClientes", "gerenteRegional", "coordenador", "obs", "status"];
   function renderHist() {
@@ -413,24 +426,26 @@
       return !termo || [o.carro, o.linha, o.motorista, o.localSocorro, o.coordenador].join(" ").toLowerCase().indexOf(termo) > -1;
     });
     var rows = lista.map(function (o) {
+      var sec = (o.socorroEm && Store.duracaoSecundariaMs) ? fmtDur(Store.duracaoSecundariaMs(o)) : "-";
       return "<tr><td>" + fmtClock(o.abertaEm) + "</td><td>" + esc(o.carro) + "</td><td>" + esc(o.linha) +
-        "</td><td>" + esc(o.localSocorro) + "</td><td>" + fmtDur(Store.duracaoMs(o)) +
+        "</td><td>" + esc(o.localSocorro) + "</td><td>" + fmtDur(Store.duracaoMs(o)) + "</td><td>" + sec +
         '</td><td><button class="btn blue sm" data-action="detalhe" data-id="' + o.id + '">Ver</button> ' +
         '<button class="btn wine sm" data-action="hist-del" data-id="' + o.id + '">x</button></td></tr>';
     }).join("");
-    $("#tblHist").innerHTML = "<thead><tr><th>Aberta</th><th>Carro</th><th>Linha</th><th>Local</th><th>Duracao</th><th></th></tr></thead><tbody>" +
-      (rows || '<tr><td colspan="6" style="text-align:center;color:#888;padding:20px">Nenhuma ocorrencia finalizada ainda.</td></tr>') + "</tbody>";
+    $("#tblHist").innerHTML = "<thead><tr><th>Aberta</th><th>Carro</th><th>Linha</th><th>Local</th><th>Duracao</th><th>Dur. SOS Mec.</th><th></th></tr></thead><tbody>" +
+      (rows || '<tr><td colspan="7" style="text-align:center;color:#888;padding:20px">Nenhuma ocorrencia finalizada ainda.</td></tr>') + "</tbody>";
   }
   function exportarCSV() {
     var lista = Store.listarFinalizadas(); if (!lista.length) { alert("Nada para exportar."); return; }
     function cell(v) { v = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(v) ? '"' + v + '"' : v; }
-    var linhas = [CSV_COLS.concat(["duracao"]).join(";")];
+    var linhas = [CSV_COLS.concat(["duracao", "duracao_sos_mecanico"]).join(";")];
     lista.forEach(function (o) {
       var row = CSV_COLS.map(function (c) {
         if (c === "abertaEm" || c === "finalizadaEm") return cell(fmtClock(o[c]));
         return cell(o[c]);
       });
       row.push(cell(fmtDur(Store.duracaoMs(o))));
+      row.push(cell((o.socorroEm && Store.duracaoSecundariaMs) ? fmtDur(Store.duracaoSecundariaMs(o)) : ""));
       linhas.push(row.join(";"));
     });
     baixar(linhas.join("\n"), "ocorrencias_" + new Date().toISOString().slice(0, 10) + ".csv", "text/csv;charset=utf-8");
@@ -498,12 +513,12 @@
       var d = lerForm();
       if (!d.carro) { alert("Informe o carro."); return; }
       if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; var novo = Store.criar(d); enviarWhats(novo); }
-      e.target.reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
+      e.target.reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-terminoData").disabled = true; $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
       showView("painel");
     });
-    $("#form-ocorrencia").addEventListener("reset", function () { if (suprimirReset) return; setTimeout(function () { preencherDataHoje(); $("#f-termino").disabled = true; }, 0); });
+    $("#form-ocorrencia").addEventListener("reset", function () { if (suprimirReset) return; setTimeout(function () { preencherDataHoje(); $("#f-termino").disabled = true; $("#f-terminoData").disabled = true; }, 0); });
     $("#cancelarEdicao").addEventListener("click", function () {
-      $("#form-ocorrencia").reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
+      $("#form-ocorrencia").reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-terminoData").disabled = true; $("#f-id").value = ""; $("#cancelarEdicao").style.display = "none"; showView("painel");
     });
     // status select (delegacao change)
     document.addEventListener("change", function (e) {
