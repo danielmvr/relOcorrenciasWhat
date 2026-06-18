@@ -28,7 +28,7 @@
   var SIMPLES = ["carro","carroSegue","motorista","matricula","linha","localSocorro","dataViagem",
     "horarioViagem","qtdClientes","encomendas","alimentacaoFornecida","defeitoMotorista",
     "responsavelManutencao","saidaSocorro","gerenteRegional","coordenador","obs",
-    "regional","placa","modelo","capacidade","servico","dataOcorrencia","horaQuebra","terminoSocorro"];
+    "regional","placa","modelo","capacidade","servico","dataOcorrencia","horaQuebra","terminoSocorro","terminoData"];
   function toSnake(k) { return k.replace(/[A-Z]/g, function (c) { return "_" + c.toLowerCase(); }); }
   function objToRow(o) {
     var row = { id: o.id, status: o.status || "aberta", aberta_em: o.abertaEm || nowISO(),
@@ -60,6 +60,10 @@
       for (var i = 0; i < cad.frota.length; i++) if (String(cad.frota[i].veiculo).toUpperCase() === a) return cad.frota[i]; return null; }
     function dur(o, ate) { var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
       var fim = o.socorroEm ? new Date(o.socorroEm).getTime() : (o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now())); return Math.max(0, fim - base); }
+    // Duracao secundaria (SOS Mecanico): total da quebra ate a finalizacao completa.
+    // Ignora a parada do S.O.S. passageiros; quando nao houve SOS, coincide com a principal.
+    function durSec(o, ate) { var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
+      var fim = o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now()); return Math.max(0, fim - base); }
     function pushDB(o) {
       try { client.from("ocorrencias").upsert(objToRow(o)).then(function (r) { if (r && r.error) console.error("Supabase upsert:", r.error.message || r.error); }); }
       catch (e) { console.error("Supabase upsert falhou:", e); }
@@ -142,7 +146,7 @@
         var o = Object.assign({ carro:"",carroSegue:"",motorista:"",matricula:"",linha:"",localSocorro:"",
           dataViagem:"",horarioViagem:"",qtdClientes:"",encomendas:"Não",alimentacaoFornecida:"Não",
           defeitoMotorista:"",responsavelManutencao:"",saidaSocorro:"",gerenteRegional:"",coordenador:"",obs:"",
-          servico:"",dataOcorrencia:"",horaQuebra:"",terminoSocorro:"" }, dados || {});
+          servico:"",dataOcorrencia:"",horaQuebra:"",terminoSocorro:"",terminoData:"" }, dados || {});
         o.id = uid(); o.status = "aberta"; o.abertaEm = nowISO(); o.finalizadaEm = null;
         o.inicioEm = montarInicio(o.dataOcorrencia, o.horaQuebra) || o.abertaEm;
         o.regional = v ? v.regional : (dados.regional || ""); o.placa = v ? v.placa : "";
@@ -155,7 +159,7 @@
         var ini = montarInicio(o.dataOcorrencia, o.horaQuebra); if (ini) o.inicioEm = ini;
         // registro ja parado (finalizado/SOS): recalcula o instante final pela hora de termino editada
         if (o.terminoSocorro && (o.finalizadaEm || o.socorroEm)) {
-          var fim = montarFim(o.dataOcorrencia, o.terminoSocorro, o.inicioEm || o.abertaEm, o.socorroEm || o.finalizadaEm);
+          var fim = montarFim(o.terminoData || o.dataOcorrencia, o.terminoSocorro, o.inicioEm || o.abertaEm, o.socorroEm || o.finalizadaEm);
           if (fim) { if (o.socorroEm) o.socorroEm = fim; else o.finalizadaEm = fim; }
         }
         if (o.finalizadaEm || o.socorroEm) o.duracaoMs = dur(o);
@@ -165,7 +169,7 @@
         if (o.socorroEm && (status === "em_rota" || status === "em_atendimento" || status === "aberta")) {
           var pausa = Date.now() - new Date(o.socorroEm).getTime();
           o.inicioEm = new Date(new Date(o.inicioEm || o.abertaEm).getTime() + pausa).toISOString();
-          o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs;
+          o.socorroEm = null; o.terminoSocorro = ""; o.terminoData = ""; delete o.duracaoMs;
           o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Tempo retomado (cronometro voltou a contar)" });
         }
         o.status = status; o.eventos.push({ ts: nowISO(), tipo: "status", texto: texto || ("Status: " + L.STATUS[status].label) });
@@ -176,19 +180,20 @@
       marcarEscalado: function (id) { var o = this.obter(id); if (!o) return null;
         o.eventos.push({ ts: nowISO(), tipo: "escalado3h", texto: "Alerta de 3h enviado (responsavel, empresa e diretor)" }); fire(); pushDB(o); return o; },
       finalizarSOS: function (id, texto) { var o = this.obter(id); if (!o) return null;
-        if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.duracaoMs = dur(o); }
+        if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.terminoData = ymdLocal(o.socorroEm); o.duracaoMs = dur(o); }
         o.status = "aguardando";
         o.eventos.push({ ts: nowISO(), tipo: "sos", texto: texto || ("S.O.S. passageiros concluido - tempo parado em " + o.terminoSocorro) }); fire(); pushDB(o); return o; },
       finalizar: function (id, texto) { var o = this.obter(id); if (!o) return null; o.status = "finalizada";
-        o.finalizadaEm = nowISO(); if (!o.terminoSocorro) o.terminoSocorro = horaHM(o.finalizadaEm); o.duracaoMs = dur(o);
+        o.finalizadaEm = nowISO(); if (!o.terminoSocorro) { o.terminoSocorro = horaHM(o.finalizadaEm); o.terminoData = ymdLocal(o.finalizadaEm); } o.duracaoMs = dur(o);
         o.eventos.push({ ts: o.finalizadaEm, tipo: "finalizacao", texto: texto || "Ocorrencia finalizada" }); fire(); pushDB(o); return o; },
       reabrir: function (id) { var o = this.obter(id); if (!o) return null; o.status = "em_atendimento";
-        o.finalizadaEm = null; o.socorroEm = null; o.terminoSocorro = ""; delete o.duracaoMs; o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta (tempo retomado)" }); fire(); pushDB(o); return o; },
+        o.finalizadaEm = null; o.socorroEm = null; o.terminoSocorro = ""; o.terminoData = ""; delete o.duracaoMs; o.eventos.push({ ts: nowISO(), tipo: "status", texto: "Ocorrencia reaberta (tempo retomado)" }); fire(); pushDB(o); return o; },
       remover: function (id) { var i = findIdx(id); if (i >= 0) cache.splice(i, 1); fire();
         try { client.from("ocorrencias").delete().eq("id", id).then(function (r) { if (r && r.error) console.error("Supabase delete:", r.error.message || r.error); }); }
         catch (e) { console.error("Supabase delete falhou:", e); } },
 
       duracaoMs: dur,
+      duracaoSecundariaMs: durSec,
       nivelUrgencia: L.nivelUrgencia,
 
       frota: function () { return cad.frota.slice(); },
