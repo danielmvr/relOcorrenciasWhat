@@ -11,6 +11,19 @@
   function nowISO() { return new Date().toISOString(); }
   function montarInicio(d, h) { if (!d || !h) return null; var ms = Date.parse(d + "T" + h + ":00"); return isNaN(ms) ? null : new Date(ms).toISOString(); }
   function horaHM(iso) { var d = new Date(iso), p = function (n) { return (n < 10 ? "0" : "") + n; }; return p(d.getHours()) + ":" + p(d.getMinutes()); }
+  function ymdLocal(iso) { var d = new Date(iso), p = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+  // Monta o instante final (finalizacao/SOS) a partir da hora HH:MM editada.
+  // Usa a data da ocorrencia (ou a data do fim atual); se a hora ficar antes do
+  // inicio, assume o dia seguinte (socorro que passou da meia-noite).
+  function montarFim(dataOcorr, horaFim, iniISO, fimAtualISO) {
+    if (!horaFim) return null;
+    var dia = dataOcorr || (fimAtualISO ? ymdLocal(fimAtualISO) : (iniISO ? ymdLocal(iniISO) : null));
+    if (!dia) return null;
+    var ms = Date.parse(dia + "T" + horaFim + ":00"); if (isNaN(ms)) return null;
+    var ini = iniISO ? new Date(iniISO).getTime() : 0;
+    if (ms < ini) ms += 86400000;
+    return new Date(ms).toISOString();
+  }
 
   var SIMPLES = ["carro","carroSegue","motorista","matricula","linha","localSocorro","dataViagem",
     "horarioViagem","qtdClientes","encomendas","alimentacaoFornecida","defeitoMotorista",
@@ -140,6 +153,11 @@
       atualizar: function (id, patch) { var o = this.obter(id); if (!o) return null; Object.assign(o, patch);
         if (patch && patch.carro) { var v = buscarVeiculo(patch.carro); if (v) { o.regional=v.regional; o.placa=v.placa; o.capacidade=v.capacidade; o.modelo=v.modelo; } }
         var ini = montarInicio(o.dataOcorrencia, o.horaQuebra); if (ini) o.inicioEm = ini;
+        // registro ja parado (finalizado/SOS): recalcula o instante final pela hora de termino editada
+        if (o.terminoSocorro && (o.finalizadaEm || o.socorroEm)) {
+          var fim = montarFim(o.dataOcorrencia, o.terminoSocorro, o.inicioEm || o.abertaEm, o.socorroEm || o.finalizadaEm);
+          if (fim) { if (o.socorroEm) o.socorroEm = fim; else o.finalizadaEm = fim; }
+        }
         if (o.finalizadaEm || o.socorroEm) o.duracaoMs = dur(o);
         o.eventos = o.eventos || []; o.eventos.push({ ts: nowISO(), tipo: "edicao", texto: "Ocorrencia editada" + (o.status === "finalizada" ? " (apos finalizacao)" : "") });
         fire(); pushDB(o); return o; },
