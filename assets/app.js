@@ -63,9 +63,22 @@
     if (!cfg || !cfg.ativo || !cfg.ponteUrl || !destinos || !destinos.length) return Promise.reject(new Error("envio desligado/sem destinos"));
     return fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ destinos: destinos, mensagem: mensagem }) });
   }
-  function enviarWhats(o) { // na criacao: envia ao Responsavel Apoio do card
+  function destinosGrupo() { // grupo do WhatsApp (sempre adicional aos envios individuais)
+    var cfg = window.WHATSAPP_CONFIG || {};
+    return cfg.grupoId ? [{ grupo: cfg.grupoId, nome: cfg.grupoNome || "Grupo" }] : [];
+  }
+  function enviarWhats(o) { // na criacao (abertura): Responsavel Apoio do card + grupo
     if (!o) return;
-    postPonte(montarDestinos([o.gerenteRegional]), whatsApp(o)).then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+    postPonte(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o))
+      .then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+  }
+  function avisarAtualizacao(id, motivo) { // toda atualizacao na linha do tempo: Responsavel + grupo (ate finalizar)
+    var o = Store.obter(id); if (!o) return;
+    if (o.status === "finalizada" && motivo !== "Ocorrência finalizada") return; // apos finalizada, so a propria finalizacao avisa
+    var destinos = montarDestinos([o.gerenteRegional]).concat(destinosGrupo());
+    if (!destinos.length) return;
+    var msg = "🔄 *ATUALIZAÇÃO DA OCORRÊNCIA*" + (motivo ? " — " + motivo : "") + "\n\n" + whatsApp(o);
+    postPonte(destinos, msg).then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
   }
   function responsaveisEmpresa(o) { // regra de escalonamento por empresa
     var emp = empresaDe(o).key;
@@ -88,7 +101,7 @@
       nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
     }
-    postPonte(montarDestinos(nomes), mensagem).then(
+    postPonte(montarDestinos(nomes).concat(destinosGrupo()), mensagem).then(
       function () { Store.marcarEscalado(o.id, nivel); },  // ponte alcancada -> marca p/ nao repetir
       function () { /* sem ponte nesta maquina: nao marca */ }
     );
@@ -283,32 +296,39 @@
   function telGerente(nome) { if (!nome) return ""; var g = Store.gerentes().filter(function (x) { return x.nome === nome; })[0]; return g && g.telefone ? g.telefone : ""; }
   function whatsApp(o) {
     var emp = empresaDe(o), tipo = tipoCarro(o.carro);
+    var DIV = "━━━━━━━━━━━━━━━━";
     var L = [];
     L.push("🚨 *OCORRÊNCIA - SOCORRO* 🚨");
-    L.push("━━━━━━━━━━━━━━━━");
+    // ---------- Dados do serviço ----------
+    L.push(DIV);
+    L.push("🧾 *DADOS DO SERVIÇO*");
     L.push("🚌 Carro: *" + (o.carro || "-") + "*" + (o.carroSegue ? "   ➡️ segue: *" + o.carroSegue + "*" : ""));
     if (emp.nome) L.push("🏢 Empresa: " + emp.nome + " · " + tipoNome(tipo));
     if (o.servico) L.push("🔖 Serviço: " + o.servico);
     if (o.linha) L.push("🧭 Linha: " + o.linha);
-    if (o.localSocorro) L.push("📍 Local: " + o.localSocorro);
-    if (o.dataOcorrencia) L.push("📅 Data da ocorrência: " + fmtDateBR(o.dataOcorrencia));
-    if (o.horaQuebra) L.push("🛠️ Hora da quebra: " + o.horaQuebra);
     if (o.dataViagem) L.push("🗓️ Data da viagem: " + fmtDateBR(o.dataViagem));
     if (o.horarioViagem) L.push("⏰ Horário da viagem: " + o.horarioViagem);
     if (o.motorista) L.push("👤 Motorista: " + o.motorista + (o.matricula ? " (mat " + o.matricula + ")" : ""));
-    L.push("👥 Clientes: " + (o.qtdClientes || "0") + "   📦 Encomendas: " + (o.encomendas || "-") + "   🍽️ Alimentação: " + (o.alimentacaoFornecida || "-"));
+    // ---------- Dados da ocorrência ----------
+    L.push(DIV);
+    L.push("⚠️ *DADOS DA OCORRÊNCIA*");
+    if (o.dataOcorrencia) L.push("📅 Data da ocorrência: " + fmtDateBR(o.dataOcorrencia));
+    if (o.horaQuebra) L.push("🛠️ Hora da quebra: " + o.horaQuebra);
+    if (o.localSocorro) L.push("📍 Local: " + o.localSocorro);
     if (o.defeitoMotorista) L.push("🔧 Defeito: " + o.defeitoMotorista);
     if (o.responsavelManutencao) L.push("🧰 Manutenção: " + o.responsavelManutencao);
     if (o.saidaSocorro) L.push("🚐 Saída do socorro: " + o.saidaSocorro);
-    if (o.terminoSocorro) L.push("🏁 Término do socorro: " + o.terminoSocorro);
+    if (o.terminoSocorro) L.push("🏁 Término do socorro: " + o.terminoSocorro + (o.terminoData ? " (" + fmtDateBR(o.terminoData) + ")" : ""));
+    L.push("👥 Clientes: " + (o.qtdClientes || "0") + "   📦 Encomendas: " + (o.encomendas || "-") + "   🍽️ Alimentação: " + (o.alimentacaoFornecida || "-"));
     if (o.gerenteRegional) L.push("👔 Responsável Apoio: " + o.gerenteRegional + (telGerente(o.gerenteRegional) ? " (" + telGerente(o.gerenteRegional) + ")" : ""));
     if (o.coordenador) L.push("🧑‍💼 Coordenador: " + o.coordenador);
-    L.push("━━━━━━━━━━━━━━━━");
+    // ---------- Status / duração ----------
+    L.push(DIV);
     L.push("⏱️ Status: *" + (Store.STATUS[o.status] ? Store.STATUS[o.status].label : o.status) + "*   ·   Duração: *" + fmtDur(Store.duracaoMs(o)) + "*" + (o.status === "finalizada" ? " (final)" : " (em curso)"));
     if (o.socorroEm && Store.duracaoSecundariaMs) L.push("🔧 Duração SOS Mecânico: *" + fmtDur(Store.duracaoSecundariaMs(o)) + "*");
     if (o.obs) L.push("📝 Obs: " + o.obs);
     if (o.eventos && o.eventos.length) {
-      L.push("━━━━━━━━━━━━━━━━");
+      L.push(DIV);
       L.push("🕒 *Linha do tempo*");
       o.eventos.forEach(function (e) { L.push("• " + fmtClock(e.ts) + " — " + (e.texto || "")); });
     }
@@ -555,7 +575,9 @@
     // status select (delegacao change)
     document.addEventListener("change", function (e) {
       var sel = e.target.closest(".status-sel"); if (!sel) return;
-      Store.mudarStatus(sel.getAttribute("data-id"), sel.value); renderBoard();
+      var sid = sel.getAttribute("data-id");
+      Store.mudarStatus(sid, sel.value); renderBoard();
+      avisarAtualizacao(sid, "Status: " + (Store.STATUS[sel.value] ? Store.STATUS[sel.value].label : sel.value));
     });
     // cadastros add
     $("#addLoc").addEventListener("click", function () {
@@ -654,22 +676,22 @@
         case "detalhe": abrirDetalhe(id); break;
         case "copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); avisarAtualizacao(id, "Ocorrência finalizada"); }
           break;
         case "sos":
-          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); }
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); avisarAtualizacao(id, "S.O.S. passageiros concluído"); }
           break;
-        case "m-status": Store.mudarStatus(id, t.getAttribute("data-status")); abrirDetalhe(id); renderBoard(); break;
+        case "m-status": Store.mudarStatus(id, t.getAttribute("data-status")); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "Status: " + (Store.STATUS[t.getAttribute("data-status")] ? Store.STATUS[t.getAttribute("data-status")].label : t.getAttribute("data-status"))); break;
         case "m-add":
-          var inp = $("#m-evento"); if (inp && inp.value.trim()) { Store.addEvento(id, inp.value.trim()); abrirDetalhe(id); renderBoard(); }
+          var inp = $("#m-evento"); if (inp && inp.value.trim()) { var med = inp.value.trim(); Store.addEvento(id, med); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, med); }
           break;
         case "m-finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); avisarAtualizacao(id, "Ocorrência finalizada"); }
           break;
         case "m-sos":
-          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); }
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "S.O.S. passageiros concluído"); }
           break;
-        case "m-reabrir": Store.reabrir(id); abrirDetalhe(id); renderBoard(); break;
+        case "m-reabrir": Store.reabrir(id); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "Ocorrência reaberta"); break;
         case "m-copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "m-editar": fecharModal(); editar(Store.obter(id)); break;
         case "m-excluir":
