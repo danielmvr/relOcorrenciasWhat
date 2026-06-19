@@ -73,13 +73,23 @@
     if (emp === "UTIL" || emp === "SAMP" || emp === "RAF") return ["Thiago Lima", "Jonhatan Sales"];
     return [];
   }
-  function jaEscalou(o) { return (o.eventos || []).some(function (e) { return e.tipo === "escalado3h"; }); }
-  function escalar3h(o) {
-    if (escalonadosLocais[o.id]) return; escalonadosLocais[o.id] = 1; // 1x por sessao (evita repetir)
-    var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)).concat(["Fernando Saiago"]);
-    var mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
+  function jaEscalou(o, nivel) {
+    var tipo = nivel === "90" ? "escalado90" : "escalado3h";
+    return (o.eventos || []).some(function (e) { return e.tipo === tipo; });
+  }
+  function escalar(o, nivel) {
+    var chave = o.id + ":" + nivel;
+    if (escalonadosLocais[chave]) return; escalonadosLocais[chave] = 1; // 1x por sessao (evita repetir)
+    var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)); // responsavel do card + empresa
+    var mensagem;
+    if (nivel === "90") {
+      mensagem = "⚠️ *AVISO: ocorrência com 1h30 (90 min) em aberto*\n\n" + whatsApp(o);
+    } else {
+      nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
+      mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
+    }
     postPonte(montarDestinos(nomes), mensagem).then(
-      function () { Store.marcarEscalado(o.id); },  // ponte alcancada -> marca p/ nao repetir
+      function () { Store.marcarEscalado(o.id, nivel); },  // ponte alcancada -> marca p/ nao repetir
       function () { /* sem ponte nesta maquina: nao marca */ }
     );
   }
@@ -211,9 +221,11 @@
       var ab = Number(c.getAttribute("data-aberta")), f = c.getAttribute("data-fim");
       c.textContent = fmtDur((f ? Number(f) : Date.now()) - ab);
     });
-    // Escalonamento automatico: ao passar de 3h, avisa responsavel + empresa + diretor
+    // Escalonamento automatico: 90 min -> responsavel + empresa; 3h -> tambem o diretor
     Store.listarAtivas().forEach(function (o) {
-      if (Store.duracaoMs(o) >= 10800000 && !jaEscalou(o)) escalar3h(o);
+      var ms = Store.duracaoMs(o);
+      if (ms >= 10800000) { if (!jaEscalou(o, "3h")) escalar(o, "3h"); }
+      else if (ms >= 5400000) { if (!jaEscalou(o, "90")) escalar(o, "90"); }
     });
   }
 
