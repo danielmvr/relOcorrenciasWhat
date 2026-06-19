@@ -6,6 +6,7 @@
   var Store = window.Store;
   var currentView = "painel";
   var suprimirReset = false;
+  var sessaoInicio = Date.now(); // momento em que a ponte/painel abriu (trava alertas retroativos)
 
   /* ---------------- Helpers ---------------- */
   function $(s, r) { return (r || document).querySelector(s); }
@@ -245,11 +246,14 @@
       var ab = Number(c.getAttribute("data-aberta")), f = c.getAttribute("data-fim");
       c.textContent = fmtDur((f ? Number(f) : Date.now()) - ab);
     });
-    // Escalonamento automatico: 90 min -> responsavel + empresa; 3h -> tambem o diretor
+    // Escalonamento automatico: 90 min -> responsavel + empresa; 3h -> tambem o diretor.
+    // Trava: so dispara se o criterio for atingido DEPOIS que a ponte/painel abriu
+    // (nao reenvia retroativo do que ja tinha passado antes de abrir).
     Store.listarAtivas().forEach(function (o) {
       var ms = Store.duracaoMs(o);
-      if (ms >= 10800000) { if (!jaEscalou(o, "3h")) escalar(o, "3h"); }
-      else if (ms >= 5400000) { if (!jaEscalou(o, "90")) escalar(o, "90"); }
+      var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
+      if (ms >= 10800000) { if (!jaEscalou(o, "3h") && base + 10800000 >= sessaoInicio) escalar(o, "3h"); }
+      else if (ms >= 5400000) { if (!jaEscalou(o, "90") && base + 5400000 >= sessaoInicio) escalar(o, "90"); }
     });
   }
 
