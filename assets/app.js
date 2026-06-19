@@ -49,6 +49,11 @@
     a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   }
   var escalonadosLocais = {};
+  // Checkpoint persistente: o que ESTA maquina ja enviou (sobrevive a reabertura da ponte/aba).
+  var ENVIADOS_KEY = "fluxoOcor.enviados.v1";
+  var enviadosLog = (function () { try { return JSON.parse(localStorage.getItem(ENVIADOS_KEY) || "{}"); } catch (e) { return {}; } })();
+  function jaEnviado(chave) { return !!enviadosLog[chave]; }
+  function marcarEnviado(chave) { enviadosLog[chave] = Date.now(); try { localStorage.setItem(ENVIADOS_KEY, JSON.stringify(enviadosLog)); } catch (e) {} }
   function montarDestinos(nomes) {
     var vistos = {}, out = [];
     nomes.forEach(function (nome) {
@@ -69,16 +74,21 @@
   }
   function enviarWhats(o) { // na criacao (abertura): Responsavel Apoio do card + grupo
     if (!o) return;
+    var chave = o.id + ":abertura";
+    if (jaEnviado(chave)) return; // checkpoint: nao reenvia se a ponte reabrir
     postPonte(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o))
-      .then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+      .then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
   }
   function avisarAtualizacao(id, motivo) { // toda atualizacao na linha do tempo: Responsavel + grupo (ate finalizar)
     var o = Store.obter(id); if (!o) return;
     if (o.status === "finalizada" && motivo !== "Ocorrência finalizada") return; // apos finalizada, so a propria finalizacao avisa
+    var ev = (o.eventos && o.eventos.length) ? o.eventos[o.eventos.length - 1] : null;
+    var chave = id + ":upd:" + (ev ? ev.ts : motivo);
+    if (jaEnviado(chave)) return; // checkpoint: cada atualizacao envia uma unica vez
     var destinos = montarDestinos([o.gerenteRegional]).concat(destinosGrupo());
     if (!destinos.length) return;
     var msg = "🔄 *ATUALIZAÇÃO DA OCORRÊNCIA*" + (motivo ? " — " + motivo : "") + "\n\n" + whatsApp(o);
-    postPonte(destinos, msg).then(function () {}, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+    postPonte(destinos, msg).then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
   }
   function responsaveisEmpresa(o) { // regra de escalonamento por empresa
     var emp = empresaDe(o).key;
@@ -92,7 +102,8 @@
   }
   function escalar(o, nivel) {
     var chave = o.id + ":" + nivel;
-    if (escalonadosLocais[chave]) return; escalonadosLocais[chave] = 1; // 1x por sessao (evita repetir)
+    if (escalonadosLocais[chave] || jaEnviado(chave)) return; // checkpoint: nao reenvia (sessao + persistente)
+    escalonadosLocais[chave] = 1;
     var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)); // responsavel do card + empresa
     var mensagem;
     if (nivel === "90") {
@@ -102,8 +113,8 @@
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
     }
     postPonte(montarDestinos(nomes).concat(destinosGrupo()), mensagem).then(
-      function () { Store.marcarEscalado(o.id, nivel); },  // ponte alcancada -> marca p/ nao repetir
-      function () { /* sem ponte nesta maquina: nao marca */ }
+      function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enviado -> marca (local + linha do tempo)
+      function () { escalonadosLocais[chave] = 0; }  // falhou (sem ponte): libera p/ tentar de novo depois
     );
   }
 
