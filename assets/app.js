@@ -136,6 +136,7 @@
     var sec = $("#view-" + name); if (sec) sec.classList.add("active");
     $all(".nav button").forEach(function (b) { b.classList.toggle("active", b.getAttribute("data-view") === name); });
     if (name === "painel") renderBoard();
+    if (name === "nova") preencherDatalists(); // garante seletores atualizados ao abrir o formulario
     if (name === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); renderLinhas(); }
     if (name === "historico") renderHist();
   }
@@ -272,20 +273,22 @@
     $("#frotaList").innerHTML = Store.frota().map(function (v) {
       return '<option value="' + esc(v.veiculo) + '">' + esc(v.modelo + " | " + v.regional) + '</option>';
     }).join("");
+    // preserva o que estiver selecionado ao reconstruir (evita perder a escolha em atualizacoes ao vivo)
+    var gEl = $("#f-gerente"), mEl = $("#f-manutencao"), lEl = $("#f-linha"), fsEl = $("#filtroStatus");
+    var gVal = gEl ? gEl.value : "", mVal = mEl ? mEl.value : "", lVal = lEl ? lEl.value : "", fsVal = fsEl ? fsEl.value : "";
     var gers = Store.gerentes().slice().sort(function (a, b) { return (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }); });
     var respOpts = '<option value="">-</option>' + gers.map(function (g) {
       return '<option value="' + esc(g.nome) + '"' + (g.telefone ? ' style="font-weight:bold"' : '') + '>' + esc(g.nome) + '</option>';
     }).join("");
-    $("#f-gerente").innerHTML = respOpts;
-    var man = $("#f-manutencao"); if (man) man.innerHTML = respOpts;
+    if (gEl) { gEl.innerHTML = respOpts; gEl.value = gVal; }
+    if (mEl) { mEl.innerHTML = respOpts; mEl.value = mVal; }
     var lins = Store.linhas().slice().sort(function (a, b) { return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base", numeric: true }); });
-    var lin = $("#f-linha"); if (lin) lin.innerHTML = '<option value="">-</option>' + lins.map(function (l) {
+    if (lEl) { lEl.innerHTML = '<option value="">-</option>' + lins.map(function (l) {
       return '<option value="' + esc(l) + '">' + esc(l) + '</option>';
-    }).join("");
-    var fs = $("#filtroStatus");
-    fs.innerHTML = '<option value="">Todos os status</option>' + Store.STATUS_ATIVOS.map(function (k) {
+    }).join(""); lEl.value = lVal; }
+    if (fsEl) { fsEl.innerHTML = '<option value="">Todos os status</option>' + Store.STATUS_ATIVOS.map(function (k) {
       return '<option value="' + k + '">' + esc(Store.STATUS[k].label) + '</option>';
-    }).join("");
+    }).join(""); fsEl.value = fsVal; }
   }
   function onCarro() {
     var v = Store.buscarVeiculo($("#f-carro").value);
@@ -741,6 +744,7 @@
     if (currentView === "painel") renderBoard();
     else if (currentView === "historico") renderHist();
     else if (currentView === "cadastros") { renderFrota(); renderLoc(); renderPa(); renderGer(); }
+    else if (currentView === "nova") preencherDatalists(); // cadastro mudou em outra maquina -> atualiza seletores (preserva selecao)
   }
   function aplicarModo() {
     var chip = $("#modoChip"), txt = $("#modoTexto"), remoto = (window.MODO === "remoto");
