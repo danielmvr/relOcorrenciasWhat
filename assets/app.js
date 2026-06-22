@@ -262,12 +262,14 @@
     $("#frotaList").innerHTML = Store.frota().map(function (v) {
       return '<option value="' + esc(v.veiculo) + '">' + esc(v.modelo + " | " + v.regional) + '</option>';
     }).join("");
-    var respOpts = '<option value="">-</option>' + Store.gerentes().map(function (g) {
+    var gers = Store.gerentes().slice().sort(function (a, b) { return (a.nome || "").localeCompare(b.nome || "", "pt-BR", { sensitivity: "base" }); });
+    var respOpts = '<option value="">-</option>' + gers.map(function (g) {
       return '<option value="' + esc(g.nome) + '"' + (g.telefone ? ' style="font-weight:bold"' : '') + '>' + esc(g.nome) + '</option>';
     }).join("");
     $("#f-gerente").innerHTML = respOpts;
     var man = $("#f-manutencao"); if (man) man.innerHTML = respOpts;
-    var lin = $("#f-linha"); if (lin) lin.innerHTML = '<option value="">-</option>' + Store.linhas().map(function (l) {
+    var lins = Store.linhas().slice().sort(function (a, b) { return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base", numeric: true }); });
+    var lin = $("#f-linha"); if (lin) lin.innerHTML = '<option value="">-</option>' + lins.map(function (l) {
       return '<option value="' + esc(l) + '">' + esc(l) + '</option>';
     }).join("");
     var fs = $("#filtroStatus");
