@@ -64,10 +64,11 @@
     });
     return out;
   }
-  function postPonte(destinos, mensagem) {
+  function postPonte(destinos, mensagem, chave) {
     var cfg = window.WHATSAPP_CONFIG;
     if (!cfg || !cfg.ativo || !cfg.ponteUrl || !destinos || !destinos.length) return Promise.reject(new Error("envio desligado/sem destinos"));
-    return fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ destinos: destinos, mensagem: mensagem }) });
+    // chave = identificador estavel do envio (ocorrencia + tipo). A ponte usa p/ ignorar duplicatas.
+    return fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ destinos: destinos, mensagem: mensagem, chave: chave || "" }) });
   }
   function destinosGrupo() { // grupo do WhatsApp (sempre adicional aos envios individuais)
     var cfg = window.WHATSAPP_CONFIG || {};
@@ -77,8 +78,17 @@
     if (!o) return;
     var chave = o.id + ":abertura";
     if (jaEnviado(chave)) return; // checkpoint: nao reenvia se a ponte reabrir
-    postPonte(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o))
+    postPonte(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o), chave)
       .then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+  }
+  // Ao ABRIR uma ocorrencia ja vencida, manda UM unico envio no nivel mais critico
+  // (>=3h -> alerta de 3h; >=90min -> aviso de 90min; senao -> abertura normal).
+  function enviarNaAbertura(o) {
+    if (!o) return;
+    var ms = Store.duracaoMs(o);
+    if (ms >= 10800000) { marcarEnviado(o.id + ":abertura"); marcarEnviado(o.id + ":90"); escalar(o, "3h"); }
+    else if (ms >= 5400000) { marcarEnviado(o.id + ":abertura"); escalar(o, "90"); }
+    else { enviarWhats(o); }
   }
   function avisarAtualizacao(id, motivo) { // toda atualizacao na linha do tempo: Responsavel + grupo (ate finalizar)
     var o = Store.obter(id); if (!o) return;
@@ -89,7 +99,7 @@
     var destinos = montarDestinos([o.gerenteRegional]).concat(destinosGrupo());
     if (!destinos.length) return;
     var msg = "🔄 *ATUALIZAÇÃO DA OCORRÊNCIA*" + (motivo ? " — " + motivo : "") + "\n\n" + whatsApp(o);
-    postPonte(destinos, msg).then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+    postPonte(destinos, msg, chave).then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
   }
   function responsaveisEmpresa(o) { // regra de escalonamento por empresa
     var emp = empresaDe(o).key;
@@ -113,7 +123,7 @@
       nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
     }
-    postPonte(montarDestinos(nomes).concat(destinosGrupo()), mensagem).then(
+    postPonte(montarDestinos(nomes).concat(destinosGrupo()), mensagem, chave).then(
       function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enviado -> marca (local + linha do tempo)
       function () { escalonadosLocais[chave] = 0; }  // falhou (sem ponte): libera p/ tentar de novo depois
     );
@@ -581,7 +591,7 @@
       e.preventDefault();
       var d = lerForm();
       if (!d.carro) { alert("Informe o carro."); return; }
-      if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; var novo = Store.criar(d); enviarWhats(novo); }
+      if (d.id) { Store.atualizar(d.id, d); } else { delete d.id; var novo = Store.criar(d); enviarNaAbertura(novo); }
       e.target.reset(); preencherDataHoje(); $("#f-termino").disabled = true; $("#f-terminoData").disabled = true; $("#f-id").value = ""; $("#veicInfo").textContent = ""; $("#cancelarEdicao").style.display = "none";
       showView("painel");
     });
