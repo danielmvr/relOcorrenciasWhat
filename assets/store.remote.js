@@ -194,6 +194,17 @@
         try { client.from("ocorrencias").delete().eq("id", id).then(function (r) { if (r && r.error) console.error("Supabase delete:", r.error.message || r.error); }); }
         catch (e) { console.error("Supabase delete falhou:", e); } },
 
+      // ---- Fila de envios: qualquer maquina enfileira; SO a maquina da ponte consome/envia ----
+      enviarFila: function (chave, mensagem, destinos) {
+        if (!destinos || !destinos.length) return Promise.resolve(null);
+        var row = { id: uid(), chave: chave || uid(), mensagem: mensagem || "", destinos: destinos, criado_em: nowISO() };
+        return client.from("envios").upsert(row, { onConflict: "chave", ignoreDuplicates: true }); // dedup por chave
+      },
+      filaPendentes: function () { return client.from("envios").select("*").is("enviado_em", null).order("criado_em", { ascending: true }); },
+      claimEnvio: function (id) { return client.from("envios").update({ enviado_em: nowISO() }).eq("id", id).is("enviado_em", null).select(); },
+      liberarEnvio: function (id) { return client.from("envios").update({ enviado_em: null }).eq("id", id); },
+      consumirBacklog: function () { return client.from("envios").update({ enviado_em: nowISO() }).is("enviado_em", null); },
+
       duracaoMs: dur,
       duracaoSecundariaMs: durSec,
       nivelUrgencia: L.nivelUrgencia,

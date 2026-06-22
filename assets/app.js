@@ -70,6 +70,46 @@
     // chave = identificador estavel do envio (ocorrencia + tipo). A ponte usa p/ ignorar duplicatas.
     return fetch(cfg.ponteUrl, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ destinos: destinos, mensagem: mensagem, chave: chave || "" }) });
   }
+  // Roteia o envio: no modo compartilhado (remoto), ENFILEIRA no banco (qualquer maquina);
+  // so a maquina com a ponte consome a fila e dispara. No modo local, envia direto.
+  function despachar(destinos, mensagem, chave) {
+    if (window.MODO === "remoto" && Store.enviarFila) return Store.enviarFila(chave, mensagem, destinos);
+    return postPonte(destinos, mensagem, chave);
+  }
+  // ---- Consumidor da fila: roda SOMENTE na maquina que tem a ponte (PonteWhats) ----
+  var EH_PONTE = false, drenandoFila = false, backlogConsumido = false;
+  function urlPonteBase() { var cfg = window.WHATSAPP_CONFIG || {}; return (cfg.ponteUrl || "").replace(/enviar\/?$/, ""); }
+  function checarPonte() {
+    var cfg = window.WHATSAPP_CONFIG || {};
+    if (!cfg.ativo || !cfg.ponteUrl) { EH_PONTE = false; return; }
+    fetch(urlPonteBase(), { method: "GET" }).then(function (r) { EH_PONTE = !!(r && r.ok); }, function () { EH_PONTE = false; });
+  }
+  function drenarFila() {
+    if (drenandoFila || !EH_PONTE) return;
+    if (!(window.MODO === "remoto" && Store.filaPendentes)) return;
+    drenandoFila = true;
+    // na 1a vez que a ponte abre, "consome" (marca como enviado) tudo que ja estava na fila,
+    // SEM enviar -> nao dispara retroativo do que aconteceu antes de a ponte abrir.
+    var pre = backlogConsumido ? Promise.resolve(true)
+      : Store.consumirBacklog().then(function () { backlogConsumido = true; return true; }, function () { return false; });
+    pre.then(function (ok) {
+      if (!ok) { drenandoFila = false; return; }
+      Store.filaPendentes().then(function (res) {
+        var linhas = (res && res.data) ? res.data : [];
+        (function proximo(i) {
+          if (i >= linhas.length) { drenandoFila = false; return; }
+          var row = linhas[i];
+          Store.claimEnvio(row.id).then(function (c) {
+            if (!(c && c.data && c.data.length)) { proximo(i + 1); return; } // outra aba ja pegou esta linha
+            postPonte(row.destinos, row.mensagem, row.chave).then(
+              function () { proximo(i + 1); },                                  // enviado
+              function () { Store.liberarEnvio(row.id).then(function () { proximo(i + 1); }, function () { proximo(i + 1); }); } // falhou -> libera p/ retry
+            );
+          }, function () { proximo(i + 1); });
+        })(0);
+      }, function () { drenandoFila = false; });
+    });
+  }
   function destinosGrupo() { // grupo do WhatsApp (sempre adicional aos envios individuais)
     var cfg = window.WHATSAPP_CONFIG || {};
     return cfg.grupoId ? [{ grupo: cfg.grupoId, nome: cfg.grupoNome || "Grupo" }] : [];
@@ -78,8 +118,8 @@
     if (!o) return;
     var chave = o.id + ":abertura";
     if (jaEnviado(chave)) return; // checkpoint: nao reenvia se a ponte reabrir
-    postPonte(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o), chave)
-      .then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+    despachar(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), whatsApp(o), chave)
+      .then(function () { marcarEnviado(chave); }, function (e) { console.warn("Envio WhatsApp:", e && e.message); });
   }
   // Ao ABRIR uma ocorrencia ja vencida, manda UM unico envio no nivel mais critico
   // (>=3h -> alerta de 3h; >=90min -> aviso de 90min; senao -> abertura normal).
@@ -99,7 +139,7 @@
     var destinos = montarDestinos([o.gerenteRegional]).concat(destinosGrupo());
     if (!destinos.length) return;
     var msg = "🔄 *ATUALIZAÇÃO DA OCORRÊNCIA*" + (motivo ? " — " + motivo : "") + "\n\n" + whatsApp(o);
-    postPonte(destinos, msg, chave).then(function () { marcarEnviado(chave); }, function (e) { console.warn("Ponte WhatsApp:", e && e.message); });
+    despachar(destinos, msg, chave).then(function () { marcarEnviado(chave); }, function (e) { console.warn("Envio WhatsApp:", e && e.message); });
   }
   function responsaveisEmpresa(o) { // regra de escalonamento por empresa
     var emp = empresaDe(o).key;
@@ -123,9 +163,9 @@
       nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
     }
-    postPonte(montarDestinos(nomes).concat(destinosGrupo()), mensagem, chave).then(
-      function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enviado -> marca (local + linha do tempo)
-      function () { escalonadosLocais[chave] = 0; }  // falhou (sem ponte): libera p/ tentar de novo depois
+    despachar(montarDestinos(nomes).concat(destinosGrupo()), mensagem, chave).then(
+      function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enfileirado -> marca (local + linha do tempo)
+      function () { escalonadosLocais[chave] = 0; }  // falhou ao enfileirar: libera p/ tentar de novo depois
     );
   }
 
@@ -759,5 +799,8 @@
     if (Store.onChange) Store.onChange(renderAtual);
     showView("painel");
     setInterval(tick, 1000);
+    // Fila de envios: detecta se esta maquina tem a ponte e, se tiver, consome a fila.
+    checarPonte(); setInterval(checarPonte, 20000);
+    setInterval(drenarFila, 4000);
   });
 })();
