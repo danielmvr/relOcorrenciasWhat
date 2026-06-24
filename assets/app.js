@@ -130,6 +130,14 @@
     else if (ms >= 5400000) { marcarEnviado(o.id + ":abertura"); escalar(o, "90"); }
     else { enviarWhats(o); }
   }
+  function enviarEncerramento(o) { // ao FINALIZAR a ocorrencia: Responsavel Apoio + grupo
+    if (!o) return;
+    var chave = o.id + ":fim";
+    if (jaEnviado(chave)) return;
+    var msg = "✅ *OCORRÊNCIA FINALIZADA*\n\n" + whatsApp(o);
+    despachar(montarDestinos([o.gerenteRegional]).concat(destinosGrupo()), msg, chave)
+      .then(function () { marcarEnviado(chave); }, function (e) { console.warn("Envio WhatsApp:", e && e.message); });
+  }
   // DESATIVADO: envio por atualizacao da linha do tempo. Hoje so enviamos na abertura e nas janelas 90min/3h.
   // (Mantido aqui caso queira reativar no futuro; nenhum lugar chama mais esta funcao.)
   function avisarAtualizacao(id, motivo) {
@@ -158,14 +166,16 @@
     if (escalonadosLocais[chave] || jaEnviado(chave)) return; // checkpoint: nao reenvia (sessao + persistente)
     escalonadosLocais[chave] = 1;
     var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)); // responsavel do card + empresa
-    var mensagem;
+    var mensagem, destinos;
     if (nivel === "90") {
       mensagem = "⚠️ *AVISO: ocorrência com 1h30 (90 min) em aberto*\n\n" + whatsApp(o);
+      destinos = montarDestinos(nomes); // 90 min: responsavel + gestores de empresa (SEM grupo)
     } else {
       nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
+      destinos = montarDestinos(nomes).concat(destinosGrupo()); // 3h: responsavel + empresa + diretor + grupo
     }
-    despachar(montarDestinos(nomes).concat(destinosGrupo()), mensagem, chave).then(
+    despachar(destinos, mensagem, chave).then(
       function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enfileirado -> marca (local + linha do tempo)
       function () { escalonadosLocais[chave] = 0; }  // falhou ao enfileirar: libera p/ tentar de novo depois
     );
@@ -746,7 +756,7 @@
         case "detalhe": abrirDetalhe(id); break;
         case "copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); enviarEncerramento(Store.obter(id)); }
           break;
         case "sos":
           if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); }
@@ -756,7 +766,7 @@
           var inp = $("#m-evento"); if (inp && inp.value.trim()) { Store.addEvento(id, inp.value.trim()); abrirDetalhe(id); renderBoard(); }
           break;
         case "m-finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); enviarEncerramento(Store.obter(id)); }
           break;
         case "m-sos":
           if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); }
