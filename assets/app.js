@@ -130,7 +130,9 @@
     else if (ms >= 5400000) { marcarEnviado(o.id + ":abertura"); escalar(o, "90"); }
     else { enviarWhats(o); }
   }
-  function avisarAtualizacao(id, motivo) { // toda atualizacao na linha do tempo: Responsavel + grupo (ate finalizar)
+  // DESATIVADO: envio por atualizacao da linha do tempo. Hoje so enviamos na abertura e nas janelas 90min/3h.
+  // (Mantido aqui caso queira reativar no futuro; nenhum lugar chama mais esta funcao.)
+  function avisarAtualizacao(id, motivo) {
     var o = Store.obter(id); if (!o) return;
     if (o.status === "finalizada" && motivo !== "Ocorrência finalizada") return; // apos finalizada, so a propria finalizacao avisa
     var ev = (o.eventos && o.eventos.length) ? o.eventos[o.eventos.length - 1] : null;
@@ -645,9 +647,7 @@
     // status select (delegacao change)
     document.addEventListener("change", function (e) {
       var sel = e.target.closest(".status-sel"); if (!sel) return;
-      var sid = sel.getAttribute("data-id");
-      Store.mudarStatus(sid, sel.value); renderBoard();
-      avisarAtualizacao(sid, "Status: " + (Store.STATUS[sel.value] ? Store.STATUS[sel.value].label : sel.value));
+      Store.mudarStatus(sel.getAttribute("data-id"), sel.value); renderBoard();
     });
     // cadastros add
     $("#addLoc").addEventListener("click", function () {
@@ -746,22 +746,22 @@
         case "detalhe": abrirDetalhe(id); break;
         case "copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); avisarAtualizacao(id, "Ocorrência finalizada"); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); renderBoard(); }
           break;
         case "sos":
-          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); avisarAtualizacao(id, "S.O.S. passageiros concluído"); }
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); renderBoard(); }
           break;
-        case "m-status": Store.mudarStatus(id, t.getAttribute("data-status")); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "Status: " + (Store.STATUS[t.getAttribute("data-status")] ? Store.STATUS[t.getAttribute("data-status")].label : t.getAttribute("data-status"))); break;
+        case "m-status": Store.mudarStatus(id, t.getAttribute("data-status")); abrirDetalhe(id); renderBoard(); break;
         case "m-add":
-          var inp = $("#m-evento"); if (inp && inp.value.trim()) { var med = inp.value.trim(); Store.addEvento(id, med); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, med); }
+          var inp = $("#m-evento"); if (inp && inp.value.trim()) { Store.addEvento(id, inp.value.trim()); abrirDetalhe(id); renderBoard(); }
           break;
         case "m-finalizar":
-          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); avisarAtualizacao(id, "Ocorrência finalizada"); }
+          if (confirm("Finalizar esta ocorrencia?")) { Store.finalizar(id); fecharModal(); renderBoard(); renderHist(); }
           break;
         case "m-sos":
-          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "S.O.S. passageiros concluído"); }
+          if (confirm("Finalizar o S.O.S. de passageiros? O tempo sera parado e o card vai para Aguardando.")) { Store.finalizarSOS(id); abrirDetalhe(id); renderBoard(); }
           break;
-        case "m-reabrir": Store.reabrir(id); abrirDetalhe(id); renderBoard(); avisarAtualizacao(id, "Ocorrência reaberta"); break;
+        case "m-reabrir": Store.reabrir(id); abrirDetalhe(id); renderBoard(); break;
         case "m-copiar": copiar(whatsApp(Store.obter(id)), t); break;
         case "m-editar": fecharModal(); editar(Store.obter(id)); break;
         case "m-excluir":
