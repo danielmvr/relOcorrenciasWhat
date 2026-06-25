@@ -158,22 +158,23 @@
     return [];
   }
   function jaEscalou(o, nivel) {
-    var tipo = nivel === "90" ? "escalado90" : "escalado3h";
+    var tipo = nivel === "90" ? "escalado90" : (nivel === "150" ? "escalado150" : "escalado3h");
     return (o.eventos || []).some(function (e) { return e.tipo === tipo; });
   }
   function escalar(o, nivel) {
     var chave = o.id + ":" + nivel;
     if (escalonadosLocais[chave] || jaEnviado(chave)) return; // checkpoint: nao reenvia (sessao + persistente)
     escalonadosLocais[chave] = 1;
-    var nomes = [o.gerenteRegional].concat(responsaveisEmpresa(o)); // responsavel do card + empresa
     var mensagem, destinos;
     if (nivel === "90") {
       mensagem = "⚠️ *AVISO: ocorrência com 1h30 (90 min) em aberto*\n\n" + whatsApp(o);
-      destinos = montarDestinos(nomes); // 90 min: responsavel + gestores de empresa (SEM grupo)
+      destinos = montarDestinos([o.gerenteRegional].concat(responsaveisEmpresa(o))); // 90 min: responsavel + gestores (SEM grupo)
+    } else if (nivel === "150") {
+      mensagem = "⏳ *AVISO AO DIRETOR: ocorrência com 2h30 (150 min) em aberto*\n\n" + whatsApp(o);
+      destinos = montarDestinos(["Fernando Saiago"]); // 150 min: SOMENTE o diretor (sem grupo, sem empresa)
     } else {
-      nomes = nomes.concat(["Fernando Saiago"]); // diretor entra somente nas 3 horas
       mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
-      destinos = montarDestinos(nomes).concat(destinosGrupo()); // 3h: responsavel + empresa + diretor + grupo
+      destinos = montarDestinos([o.gerenteRegional].concat(responsaveisEmpresa(o)).concat(["Fernando Saiago"])).concat(destinosGrupo()); // 3h: responsavel + empresa + diretor + grupo
     }
     despachar(destinos, mensagem, chave).then(
       function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enfileirado -> marca (local + linha do tempo)
@@ -309,13 +310,14 @@
       var ab = Number(c.getAttribute("data-aberta")), f = c.getAttribute("data-fim");
       c.textContent = fmtDur((f ? Number(f) : Date.now()) - ab);
     });
-    // Escalonamento automatico: 90 min -> responsavel + empresa; 3h -> tambem o diretor.
+    // Escalonamento automatico: 90 min -> responsavel + empresa; 150 min -> SO diretor; 3h -> todos + grupo + diretor.
     // Trava: so dispara se o criterio for atingido DEPOIS que a ponte/painel abriu
     // (nao reenvia retroativo do que ja tinha passado antes de abrir).
     Store.listarAtivas().forEach(function (o) {
       var ms = Store.duracaoMs(o);
       var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
       if (ms >= 10800000) { if (!jaEscalou(o, "3h") && base + 10800000 >= sessaoInicio) escalar(o, "3h"); }
+      else if (ms >= 9000000) { if (!jaEscalou(o, "150") && base + 9000000 >= sessaoInicio) escalar(o, "150"); }
       else if (ms >= 5400000) { if (!jaEscalou(o, "90") && base + 5400000 >= sessaoInicio) escalar(o, "90"); }
     });
   }

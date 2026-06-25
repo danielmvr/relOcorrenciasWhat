@@ -178,9 +178,11 @@
       addEvento: function (id, texto, tipo) { var o = this.obter(id); if (!o || !texto) return null;
         o.eventos.push({ ts: nowISO(), tipo: tipo || "medida", texto: texto }); fire(); pushDB(o); return o; },
       marcarEscalado: function (id, nivel) { var o = this.obter(id); if (!o) return null;
-        var tipo = nivel === "90" ? "escalado90" : "escalado3h";
-        var t = nivel === "90" ? "Aviso de 1h30 enviado (responsavel e empresa)" : "Alerta de 3h enviado (responsavel, empresa e diretor)";
-        o.eventos.push({ ts: nowISO(), tipo: tipo, texto: t }); fire(); pushDB(o); return o; },
+        var mapa = { "90": ["escalado90", "Aviso de 1h30 enviado (responsavel e empresa)"],
+                     "150": ["escalado150", "Aviso de 2h30 enviado (diretor)"],
+                     "3h": ["escalado3h", "Alerta de 3h enviado (responsavel, empresa, grupo e diretor)"] };
+        var m = mapa[nivel] || mapa["3h"];
+        o.eventos.push({ ts: nowISO(), tipo: m[0], texto: m[1] }); fire(); pushDB(o); return o; },
       finalizarSOS: function (id, texto) { var o = this.obter(id); if (!o) return null;
         if (!o.socorroEm) { o.socorroEm = nowISO(); o.terminoSocorro = horaHM(o.socorroEm); o.terminoData = ymdLocal(o.socorroEm); o.duracaoMs = dur(o); }
         o.status = "aguardando";
