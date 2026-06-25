@@ -255,7 +255,7 @@
               '<p class="empresa">' + esc(emp.nome) + (emp.nome ? ' &middot; ' + tipoNome(tipo) : '') + '</p>' +
             '</div>' +
           '</div>' +
-          '<p class="linha">' + esc(o.linha || "linha nao informada") + (o.servico ? ' &middot; serv. ' + esc(o.servico) : '') + '</p>' +
+          '<p class="linha">' + esc(o.linha || "linha nao informada") + (o.horarioViagem ? ' &middot; serv. ' + esc(o.horarioViagem) : '') + '</p>' +
           '<div class="crono ' + cls + '" data-aberta="' + base + '"' + (fim ? ' data-fim="' + fim + '"' : '') + '>' + fmtDur(ms) + '</div>' +
           '<p class="row">' + statusBadge(o.status) + '</p>' +
           '<p class="row"><b>Local:</b> ' + esc(o.localSocorro || "-") + '</p>' +
@@ -423,18 +423,28 @@
     var empM = empresaDe(o), tipoM = tipoCarro(o.carro);
     $("#m-titulo").innerHTML = busSVG(empM.cor, tipoM) + " Carro " + esc(o.carro || "?");
     $("#m-status").innerHTML = statusBadge(o.status) + ' <span style="color:#bbb;font-size:10px">' + esc(empM.nome) + " &middot; " + tipoNome(tipoM) + "</span>";
-    var info = [
-      ["Servico", o.servico], ["Data da ocorrencia", fmtDateBR(o.dataOcorrencia)], ["Hora da quebra", o.horaQuebra], ["Termino do socorro", o.terminoSocorro], ["Data do termino", fmtDateBR(o.terminoData)],
-      ["Linha", o.linha], ["Local", o.localSocorro], ["Regional", o.regional],
-      ["Motorista", o.motorista], ["Matricula", o.matricula], ["Placa", o.placa],
-      ["Defeito", o.defeitoMotorista], ["Manutencao acionada", o.responsavelManutencao],
-      ["Saida do socorro", o.saidaSocorro], ["Carro que segue", o.carroSegue],
-      ["Qtd. clientes", o.qtdClientes], ["Encomendas", o.encomendas],
-      ["Alimentacao", o.alimentacaoFornecida], ["Responsavel Apoio", o.gerenteRegional],
-      ["Coordenador", o.coordenador], ["Obs", o.obs]
-    ].filter(function (p) { return p[1]; }).map(function (p) {
-      return '<p class="row"><b>' + esc(p[0]) + ':</b> ' + esc(p[1]) + '</p>';
-    }).join("");
+    function blocoDet(titulo, pares) {
+      var corpo = pares.filter(function (p) { return p[1]; }).map(function (p) {
+        return '<p class="row"><b>' + esc(p[0]) + ':</b> ' + esc(p[1]) + '</p>';
+      }).join("");
+      return corpo ? ('<p style="margin:12px 0 5px;font-weight:700;color:#9c2742;font-size:13px;border-bottom:2px solid #ddd6c2;padding-bottom:3px">' + titulo + '</p>' + corpo) : '';
+    }
+    var info =
+      blocoDet("Dados do serviço", [
+        ["Servico", o.servico], ["Horario da viagem", o.horarioViagem],
+        ["Linha", o.linha], ["Data da viagem", fmtDateBR(o.dataViagem)],
+        ["Motorista", o.motorista], ["Matricula", o.matricula],
+        ["Placa", o.placa], ["Carro que segue", o.carroSegue], ["Regional", o.regional]
+      ]) +
+      blocoDet("Dados da ocorrência", [
+        ["Data da ocorrencia", fmtDateBR(o.dataOcorrencia)], ["Hora da quebra", o.horaQuebra],
+        ["Local", o.localSocorro], ["Defeito", o.defeitoMotorista],
+        ["Manutencao acionada", o.responsavelManutencao], ["Saida do socorro", o.saidaSocorro],
+        ["Termino do socorro", o.terminoSocorro], ["Data do termino", fmtDateBR(o.terminoData)],
+        ["Qtd. clientes", o.qtdClientes], ["Encomendas", o.encomendas],
+        ["Alimentacao", o.alimentacaoFornecida], ["Responsavel Apoio", o.gerenteRegional],
+        ["Coordenador", o.coordenador], ["Obs", o.obs]
+      ]);
 
     var stBtns = Store.STATUS_ATIVOS.map(function (k) {
       return '<button class="btn sm" data-action="m-status" data-id="' + o.id + '" data-status="' + k + '" style="background:' + Store.STATUS[k].cor + '">' + esc(Store.STATUS[k].label) + '</button>';
