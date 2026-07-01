@@ -52,7 +52,7 @@
       gerentes: (seed.gerentes || []).slice(), localidades: (seed.localidades || []).slice(),
       pontosApoio: (seed.pontosApoio || []).slice(), linhas: (seed.linhas || []).slice()
     };
-    var cache = [], subs = [];
+    var cache = [], subs = [], ultimaEscrita = 0;
     function fire() { subs.forEach(function (f) { try { f(); } catch (e) {} }); }
     function findIdx(id) { for (var i = 0; i < cache.length; i++) if (cache[i].id === id) return i; return -1; }
     function upsert(o) { var i = findIdx(o.id); if (i >= 0) cache[i] = o; else cache.push(o); }
@@ -65,6 +65,7 @@
     function durSec(o, ate) { var base = o.inicioEm ? new Date(o.inicioEm).getTime() : new Date(o.abertaEm).getTime();
       var fim = o.finalizadaEm ? new Date(o.finalizadaEm).getTime() : (ate || Date.now()); return Math.max(0, fim - base); }
     function pushDB(o) {
+      ultimaEscrita = Date.now();
       try { client.from("ocorrencias").upsert(objToRow(o)).then(function (r) { if (r && r.error) console.error("Supabase upsert:", r.error.message || r.error); }); }
       catch (e) { console.error("Supabase upsert falhou:", e); }
     }
@@ -73,6 +74,26 @@
         if (res && res.error) { console.error("Supabase select:", res.error.message || res.error); return; }
         cache = (res.data || []).map(rowToObj); fire();
       });
+    }
+    // Ressincronizacao LEVE (nao le o historico inteiro): busca so as ATIVAS (conjunto pequeno) e
+    // confere as que sumiram do conjunto ativo (finalizadas/excluidas em outra estacao) uma a uma.
+    function ressync() {
+      client.from("ocorrencias").select("*").neq("status", "finalizada").then(function (res) {
+        if (res && res.error) { console.error("Supabase ressync:", res.error.message || res.error); return; }
+        var idsDB = {};
+        (res.data || []).forEach(function (row) { var o = rowToObj(row); idsDB[o.id] = 1; upsert(o); });
+        // cards ativos no cache que nao vieram como ativos do banco -> buscar estado atual (curam telas com dado velho)
+        cache.filter(function (o) { return o.status !== "finalizada" && !idsDB[o.id]; }).forEach(function (o) {
+          client.from("ocorrencias").select("*").eq("id", o.id).limit(1).then(function (r2) {
+            if (r2 && r2.error) return;
+            var row = r2.data && r2.data[0];
+            if (row) { upsert(rowToObj(row)); }                                   // finalizada em outra estacao
+            else { var i = findIdx(o.id); if (i >= 0) cache.splice(i, 1); }        // excluida em outra estacao
+            fire();
+          }, function () {});
+        });
+        fire();
+      }, function () {});
     }
     function assinarRealtime() {
       try {
@@ -207,6 +228,16 @@
       liberarEnvio: function (id) { return client.from("envios").update({ enviado_em: null }).eq("id", id); },
       consumirBacklog: function () { return client.from("envios").update({ enviado_em: nowISO() }).is("enviado_em", null); },
 
+      // Le a ocorrencia direto do banco (fonte da verdade) e atualiza o cache local.
+      // Usado como "checagem dupla" antes de disparar alerta: evita alertar card ja finalizado em outra estacao.
+      lerOcorrenciaDB: function (id) {
+        return client.from("ocorrencias").select("*").eq("id", id).limit(1).then(function (res) {
+          if (res && res.error) return null;
+          var row = res.data && res.data[0]; if (!row) return null;
+          var o = rowToObj(row); upsert(o); return o; // atualiza o cache (cura estacao com dado velho)
+        }, function () { return null; });
+      },
+
       duracaoMs: dur,
       duracaoSecundariaMs: durSec,
       nivelUrgencia: L.nivelUrgencia,
@@ -240,6 +271,9 @@
     };
     carregar(); assinarRealtime();
     carregarCadastros(); assinarCadastros();
+    // Ressincroniza com o banco a cada 30s (cura estacoes cuja conexao em tempo real caiu,
+    // ex.: TV aberta por horas). Leve: so as ativas. Nao roda logo apos escrita local (evita reverter otimista).
+    setInterval(function () { if (Date.now() - ultimaEscrita > 4000) ressync(); }, 30000);
     return Store;
   };
 })();

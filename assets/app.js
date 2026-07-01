@@ -165,21 +165,31 @@
     var chave = o.id + ":" + nivel;
     if (escalonadosLocais[chave] || jaEnviado(chave)) return; // checkpoint: nao reenvia (sessao + persistente)
     escalonadosLocais[chave] = 1;
-    var mensagem, destinos;
-    if (nivel === "90") {
-      mensagem = "⚠️ *AVISO: ocorrência com 1h30 (90 min) em aberto*\n\n" + whatsApp(o);
-      destinos = montarDestinos([o.gerenteRegional].concat(responsaveisEmpresa(o))); // 90 min: responsavel + gestores (SEM grupo)
-    } else if (nivel === "150") {
-      mensagem = "⏳ *AVISO AO DIRETOR: ocorrência com 2h30 (150 min) em aberto*\n\n" + whatsApp(o);
-      destinos = montarDestinos(["Fernando Saiago"]); // 150 min: SOMENTE o diretor (sem grupo, sem empresa)
-    } else {
-      mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(o);
-      destinos = montarDestinos([o.gerenteRegional].concat(responsaveisEmpresa(o)).concat(["Fernando Saiago"])).concat(destinosGrupo()); // 3h: responsavel + empresa + diretor + grupo
-    }
-    despachar(destinos, mensagem, chave).then(
-      function () { marcarEnviado(chave); Store.marcarEscalado(o.id, nivel); },  // enfileirado -> marca (local + linha do tempo)
-      function () { escalonadosLocais[chave] = 0; }  // falhou ao enfileirar: libera p/ tentar de novo depois
-    );
+    var tipoFlag = nivel === "90" ? "escalado90" : (nivel === "150" ? "escalado150" : "escalado3h");
+    // CHECAGEM DUPLA: confirma no banco (fonte da verdade) antes de disparar. Evita alertar
+    // um card que ja foi finalizado (ou ja escalado) em outra estacao, mesmo com o cache local velho.
+    var confirmar = (window.MODO === "remoto" && Store.lerOcorrenciaDB) ? Store.lerOcorrenciaDB(o.id) : Promise.resolve(o);
+    confirmar.then(function (atual) {
+      if (window.MODO === "remoto" && !atual) { escalonadosLocais[chave] = 0; return; } // nao confirmou: tenta depois
+      var alvo = atual || o;
+      if (alvo.status === "finalizada") return;                                  // ja fechada em outra estacao -> NAO dispara
+      if ((alvo.eventos || []).some(function (e) { return e.tipo === tipoFlag; })) return; // outra estacao ja escalou
+      var mensagem, destinos;
+      if (nivel === "90") {
+        mensagem = "⚠️ *AVISO: ocorrência com 1h30 (90 min) em aberto*\n\n" + whatsApp(alvo);
+        destinos = montarDestinos([alvo.gerenteRegional].concat(responsaveisEmpresa(alvo))); // 90 min: responsavel + gestores (SEM grupo)
+      } else if (nivel === "150") {
+        mensagem = "⏳ *AVISO AO DIRETOR: ocorrência com 2h30 (150 min) em aberto*\n\n" + whatsApp(alvo);
+        destinos = montarDestinos(["Fernando Saiago"]); // 150 min: SOMENTE o diretor
+      } else {
+        mensagem = "⏰ *ALERTA: ocorrência passou de 3 horas*\n\n" + whatsApp(alvo);
+        destinos = montarDestinos([alvo.gerenteRegional].concat(responsaveisEmpresa(alvo)).concat(["Fernando Saiago"])).concat(destinosGrupo()); // 3h: + grupo + diretor
+      }
+      despachar(destinos, mensagem, chave).then(
+        function () { marcarEnviado(chave); Store.marcarEscalado(alvo.id, nivel); },  // enfileirado -> marca (local + linha do tempo)
+        function () { escalonadosLocais[chave] = 0; }  // falhou ao enfileirar: libera p/ tentar de novo depois
+      );
+    }, function () { escalonadosLocais[chave] = 0; }); // erro ao confirmar: tenta depois
   }
 
   /* ---------------- Navegacao ---------------- */
